@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIM Room - QR Code Information System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #f0f4f8 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--bg-white);
+            padding: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            margin: 40px 0;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 20px;
+            opacity: 0.95;
+            margin-bottom: 40px;
+        }
+
+        /* Grid Section */
+        .grid-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 60px 0;
+        }
+
+        .card {
+            background: var(--bg-white);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .card p {
+            color: var(--text-light);
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .qr-demo {
+            background: #f0f4f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+
+        .info-box {
+            background: var(--bg-white);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .info-box h2 {
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+
+        .info-box ul {
+            list-style-position: inside;
+            color: var(--text-light);
+            line-height: 2;
+        }
+
+        .code-example {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .nav-links {
+                gap: 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">📱 AIM Room</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Beranda</a></li>
+                <li><a href="#kelas">Kelas</a></li>
+                <li><a href="#ruangan">Ruangan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Selamat Datang di AIM Room 👋</h1>
+            <p>Scan QR Code untuk akses informasi ruangan atau jadwal kelas dengan mudah</p>
+        </div>
+
+        <!-- Kelas Section -->
+        <h2 id="kelas" style="margin: 60px 0 30px 0; font-size: 28px;">📚 Kelas & Jadwal Dosen</h2>
+        <div class="grid-section">
+            <div class="card">
+                <h2>Kelas 1</h2>
+                <p>Akses informasi jadwal kelas 1 dan daftar dosen pengajar hari ini</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/kelas/kelas-1.html" alt="QR Kelas 1">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/kelas/kelas-1.html</p>
+                <a href="kelas/kelas-1.html" class="btn">Lihat Detail</a>
+            </div>
+
+            <div class="card">
+                <h2>Kelas 2</h2>
+                <p>Akses informasi jadwal kelas 2 dan daftar dosen pengajar hari ini</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/kelas/kelas-2.html" alt="QR Kelas 2">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/kelas/kelas-2.html</p>
+                <a href="kelas/kelas-2.html" class="btn">Lihat Detail</a>
+            </div>
+
+            <div class="card">
+                <h2>Kelas 3</h2>
+                <p>Akses informasi jadwal kelas 3 dan daftar dosen pengajar hari ini</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/kelas/kelas-3.html" alt="QR Kelas 3">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/kelas/kelas-3.html</p>
+                <a href="kelas/kelas-3.html" class="btn">Lihat Detail</a>
+            </div>
+        </div>
+
+        <!-- Ruangan Section -->
+        <h2 id="ruangan" style="margin: 60px 0 30px 0; font-size: 28px;">🏢 Ruangan</h2>
+        <div class="grid-section">
+            <div class="card">
+                <h2>Aula Mattulada</h2>
+                <p>Informasi detail, form, dan tata tertib ruangan</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/ruangan/aula-mattulada.html" alt="QR Aula Mattulada">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/ruangan/aula-mattulada.html</p>
+                <a href="ruangan/aula-mattulada.html" class="btn">Lihat Detail</a>
+            </div>
+
+            <div class="card">
+                <h2>Ruangan Mangemba</h2>
+                <p>Informasi detail, form, dan tata tertib ruangan</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/ruangan/ruangan-mangemba.html" alt="QR Ruangan Mangemba">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/ruangan/ruangan-mangemba.html</p>
+                <a href="ruangan/ruangan-mangemba.html" class="btn">Lihat Detail</a>
+            </div>
+
+            <div class="card">
+                <h2>Ruang Senat</h2>
+                <p>Informasi detail, form, dan tata tertib ruangan</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/ruangan/ruang-senat.html" alt="QR Ruang Senat">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/ruangan/ruang-senat.html</p>
+                <a href="ruangan/ruang-senat.html" class="btn">Lihat Detail</a>
+            </div>
+
+            <div class="card">
+                <h2>Lounge FIB</h2>
+                <p>Informasi detail, form, dan tata tertib ruangan</p>
+                <div class="qr-demo">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://takdim.github.io/aim-room/ruangan/lounge-fib.html" alt="QR Lounge FIB">
+                </div>
+                <p style="font-size: 12px; color: #999;">https://takdim.github.io/aim-room/ruangan/lounge-fib.html</p>
+                <a href="ruangan/lounge-fib.html" class="btn">Lihat Detail</a>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <h2>📖 Panduan Penggunaan QR Code</h2>
+            <ul>
+                <li><strong>Scan dengan smartphone:</strong> Buka aplikasi kamera atau QR Code scanner</li>
+                <li><strong>Akses halaman:</strong> QR Code akan membuka halaman dengan informasi lengkap</li>
+                <li><strong>Isi formulir:</strong> Lengkapi form pendaftaran jika dibutuhkan</li>
+                <li><strong>Baca tata tertib:</strong> Pahami peraturan dan tata tertib yang berlaku</li>
+            </ul>
+            <div class="code-example">
+URL Format QR Code:<br>
+https://takdim.github.io/aim-room/kelas/kelas-1.html<br>
+https://takdim.github.io/aim-room/ruangan/aula-mattulada.html
+            </div>
+        </div>
+    </div>
+</body>
+</html>
