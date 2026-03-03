@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruang Senat - AIM Room</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #8b5cf6;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #f0f4f8 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--bg-white);
+            padding: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 30px;
+            transition: gap 0.3s;
+        }
+
+        .back-link:hover {
+            gap: 15px;
+        }
+
+        /* Header */
+        .room-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+        }
+
+        .room-header h1 {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .room-header p {
+            opacity: 0.95;
+            font-size: 16px;
+        }
+
+        /* Info Grid */
+        .room-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .info-box {
+            background: var(--bg-white);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .info-box h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .info-box p {
+            color: var(--text-dark);
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Form Section */
+        .form-section {
+            background: var(--bg-white);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-section h2 {
+            margin-bottom: 30px;
+            color: var(--text-dark);
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        /* Rules Section */
+        .rules-section {
+            background: var(--bg-white);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .rules-section h2 {
+            margin-bottom: 30px;
+            color: var(--text-dark);
+            font-size: 28px;
+        }
+
+        .rules-list {
+            list-style: none;
+        }
+
+        .rules-list li {
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 15px;
+        }
+
+        .rules-list li:last-child {
+            border-bottom: none;
+        }
+
+        .rules-list li:before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .rules-list li p {
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Success Message */
+        .success-message {
+            background: #d1fae5;
+            border-left: 4px solid var(--success);
+            color: #047857;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        /* Print Styles */
+        @media print {
+            nav, .back-link, .btn-group {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .room-header h1 {
+                font-size: 28px;
+            }
+
+            .form-section,
+            .rules-section {
+                padding: 25px;
+            }
+
+            .nav-links {
+                gap: 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">📱 AIM Room</div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Beranda</a></li>
+                <li><a href="../index.html#kelas">Kelas</a></li>
+                <li><a href="../index.html#ruangan">Ruangan</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="../index.html" class="back-link">← Kembali ke Beranda</a>
+
+        <!-- Header -->
+        <div class="room-header">
+            <h1>🏛️ Ruang Senat</h1>
+            <p>Ruangan untuk rapat senat dan sidang akademik</p>
+        </div>
+
+        <!-- Success Message -->
+        <div class="success-message" id="successMessage">
+            ✅ <strong>Pendaftaran berhasil!</strong> Tim kami akan menghubungi Anda dalam waktu 24 jam.
+        </div>
+
+        <!-- Room Info -->
+        <div class="room-info">
+            <div class="info-box">
+                <h4>Kapasitas</h4>
+                <p>200 Orang</p>
+            </div>
+            <div class="info-box">
+                <h4>Lokasi</h4>
+                <p>Gedung Utama, Lantai 1</p>
+            </div>
+            <div class="info-box">
+                <h4>Fasilitas</h4>
+                <p>AC, Proyektor, Sound System</p>
+            </div>
+            <div class="info-box">
+                <h4>Kontak</h4>
+                <p>+62-xxx-xxxx-xxx</p>
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section">
+            <h2>📝 Form Pendaftaran Penggunaan Ruangan</h2>
+            <form id="registrationForm" onsubmit="handleSubmit(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Lengkap *</label>
+                        <input type="text" required placeholder="Masukkan nama lengkap">
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" required placeholder="contoh@email.com">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nomor Telepon *</label>
+                        <input type="tel" required placeholder="+62-xxx-xxxx">
+                    </div>
+                    <div class="form-group">
+                        <label>Unit/Departemen *</label>
+                        <input type="text" required placeholder="Masukkan unit">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tanggal Penggunaan *</label>
+                        <input type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Waktu Mulai *</label>
+                        <input type="time" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Jumlah Peserta *</label>
+                    <input type="number" required placeholder="Masukkan jumlah peserta" min="1" max="500">
+                </div>
+
+                <div class="form-group">
+                    <label>Tujuan Penggunaan *</label>
+                    <textarea required placeholder="Jelaskan tujuan penggunaan ruangan..."></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Kirim Pendaftaran</button>
+                    <button type="reset" class="btn btn-secondary">Bersihkan Form</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Rules Section -->
+        <div class="rules-section">
+            <h2>⚖️ Tata Tertib Penggunaan Ruangan</h2>
+            <ul class="rules-list">
+                <li>
+                    <p><strong>Jam Operasional:</strong> Ruangan dapat digunakan Senin-Jumat pukul 07:00-17:00 WIB, Sabtu pukul 07:00-12:00 WIB</p>
+                </li>
+                <li>
+                    <p><strong>Konfirmasi Terlebih Dahulu:</strong> Harus melakukan registrasi dan mendapat persetujuan minimal 3 hari sebelumnya</p>
+                </li>
+                <li>
+                    <p><strong>Kebersihan:</strong> Peserta bertanggung jawab menjaga kebersihan ruangan. Dilarang makan dan minum selain di area yang ditentukan</p>
+                </li>
+                <li>
+                    <p><strong>Perawatan Barang:</strong> Peserta wajib merawat semua fasilitas dan peralatan dengan baik. Kerusakan akan ditanggung penuh</p>
+                </li>
+                <li>
+                    <p><strong>Perilaku:</strong> Dilarang membuat keributan, berperilaku tidak sopan, atau melakukan hal yang mengganggu pengguna lain</p>
+                </li>
+                <li>
+                    <p><strong>Larangan:</strong> Dilarang membawa minuman beralkohol, rokok, dan benda berbahaya lainnya</p>
+                </li>
+                <li>
+                    <p><strong>Keamanan:</strong> Peserta harus meninggalkan ruangan pukul 17:30 WIB. Pintu harus dikunci dan lampu dimatikan</p>
+                </li>
+                <li>
+                    <p><strong>Sanksi:</strong> Pelanggaran tata tertib dapat mengakibatkan pengecualian penggunaan ruangan di masa depan</p>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Tampilkan pesan sukses
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.add('show');
+            
+            // Reset form
+            document.getElementById('registrationForm').reset();
+            
+            // Sembunyikan pesan setelah 5 detik
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
