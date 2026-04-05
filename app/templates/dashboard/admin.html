@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-box">RA</div>
+        <div>
+          <div class="sidebar-title">Room Admin</div>
+          <div class="sidebar-subtitle">Manajemen User</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-title">Menu</div>
+        <nav class="sidebar-menu">
+          <a class="active" href="{{ url_for('dashboard.admin_home') }}">
+            <span class="menu-icon"></span>
+            <span>Dashboard</span>
+          </a>
+          <a href="#add-user">
+            <span class="menu-icon"></span>
+            <span>Tambah User</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="avatar">A</div>
+        <div class="user-meta">
+          <span class="user-name">{{ full_name }}</span>
+          <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="topbar">
+        <h1>Dashboard</h1>
+      </div>
+
+      <header class="page-header">
+        <h2>Selamat datang, {{ full_name }}</h2>
+        <p>Ringkasan user dan pengelolaan staff.</p>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card">
+          <p class="stat-label">Total User</p>
+          <p class="stat-value">{{ total_users }}</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Jumlah Admin</p>
+          <p class="stat-value">{{ admin_count }}</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Jumlah Staff</p>
+          <p class="stat-value">{{ staff_count }}</p>
+        </article>
+      </section>
+
+      <section id="add-user" class="two-col">
+        <form method="post" class="panel">
+          <h3>Tambah User Staff</h3>
+          <div class="field">
+            <label for="full_name">Nama Lengkap</label>
+            <input id="full_name" name="full_name" type="text" required />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required />
+          </div>
+          <div class="field">
+            <label for="confirm_password">Konfirmasi Password</label>
+            <input id="confirm_password" name="confirm_password" type="password" required />
+          </div>
+          <button type="submit" class="primary">Buat Staff</button>
+        </form>
+
+        <div class="panel">
+          <h3>Daftar Staff</h3>
+          {% if staff_users %}
+            <ul class="staff-list">
+              {% for staff in staff_users %}
+                <li><strong>{{ staff.full_name }}</strong><span>{{ staff.email }}</span></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p>Belum ada user staff.</p>
+          {% endif %}
+        </div>
+      </section>
+    </section>
+  </div>
+{% endblock %}

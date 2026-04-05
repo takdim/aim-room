@@ -1,0 +1,152 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Semester{% endblock %}
+
+{% set active_menu = "semesters" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">📅</span>
+        <h2>Kelola Semester</h2>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-open="semester-modal">
+        <span class="btn-icon">+</span> Tambah
+      </button>
+    </header>
+
+    <section class="toolbar toolbar-compact">
+      <form method="get" class="search">
+        <input name="q" type="search" placeholder="Cari semester..." value="{{ q }}" />
+      </form>
+    </section>
+
+    <section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Nama Semester</th>
+            <th>Mulai</th>
+            <th>Selesai</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for semester in semesters %}
+            <tr>
+              <td class="cell-name">{{ semester.name }}</td>
+              <td>{{ semester.start_date or "-" }}</td>
+              <td>{{ semester.end_date or "-" }}</td>
+              <td>
+                <span class="badge {% if semester.is_active %}badge-active{% else %}badge-neutral{% endif %}">
+                  {{ "Aktif" if semester.is_active else "Tidak" }}
+                </span>
+              </td>
+              <td class="cell-actions">
+                <button type="button" class="btn-ghost" data-edit
+                  data-id="{{ semester.id }}"
+                  data-name="{{ semester.name }}"
+                  data-start="{{ semester.start_date or '' }}"
+                  data-end="{{ semester.end_date or '' }}"
+                  data-active="{{ '1' if semester.is_active else '0' }}">✎</button>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus semester ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="semester_id" value="{{ semester.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="5" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+
+  <div class="modal-backdrop" data-modal="semester-modal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="semester-modal-title">Tambah Semester</h3>
+        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+      </div>
+      <form method="post" id="semester-form">
+        <input type="hidden" name="action" value="add" />
+        <input type="hidden" name="semester_id" value="" />
+        <div class="field">
+          <label for="name">Nama Semester</label>
+          <input id="name" name="name" type="text" required placeholder="Semester Ganjil 2025/2026" />
+        </div>
+        <div class="field">
+          <label for="start_date">Tanggal Mulai (opsional)</label>
+          <input id="start_date" name="start_date" type="date" />
+        </div>
+        <div class="field">
+          <label for="end_date">Tanggal Selesai (opsional)</label>
+          <input id="end_date" name="end_date" type="date" />
+        </div>
+        <div class="field">
+          <label>
+            <input type="checkbox" name="is_active" />
+            Jadikan semester aktif
+          </label>
+        </div>
+        <button type="submit" class="primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const semesterModalBtn = document.querySelector('[data-modal-open="semester-modal"]');
+    const semesterBackdrop = document.querySelector('[data-modal="semester-modal"]');
+    const semesterClose = semesterBackdrop.querySelector('[data-modal-close]');
+    const semesterForm = document.getElementById('semester-form');
+    const semesterTitle = document.getElementById('semester-modal-title');
+
+    const openSemesterModal = () => {
+      semesterBackdrop.classList.add('open');
+      semesterBackdrop.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeSemesterModal = () => {
+      semesterBackdrop.classList.remove('open');
+      semesterBackdrop.setAttribute('aria-hidden', 'true');
+    };
+
+    semesterModalBtn.addEventListener('click', () => {
+      semesterTitle.textContent = 'Tambah Semester';
+      semesterForm.action.value = 'add';
+      semesterForm.semester_id.value = '';
+      semesterForm.name.value = '';
+      semesterForm.start_date.value = '';
+      semesterForm.end_date.value = '';
+      semesterForm.is_active.checked = false;
+      openSemesterModal();
+    });
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        semesterTitle.textContent = 'Edit Semester';
+        semesterForm.action.value = 'update';
+        semesterForm.semester_id.value = btn.dataset.id;
+        semesterForm.name.value = btn.dataset.name;
+        semesterForm.start_date.value = btn.dataset.start;
+        semesterForm.end_date.value = btn.dataset.end;
+        semesterForm.is_active.checked = btn.dataset.active === '1';
+        openSemesterModal();
+      });
+    });
+
+    semesterClose.addEventListener('click', closeSemesterModal);
+    semesterBackdrop.addEventListener('click', (e) => {
+      if (e.target === semesterBackdrop) closeSemesterModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSemesterModal();
+    });
+  </script>
+{% endblock %}

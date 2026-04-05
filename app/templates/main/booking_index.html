@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Peminjaman Ruangan{% endblock %}
+
+{% block content %}
+  <section class="booking-page">
+    <header class="booking-topbar">
+      <div class="booking-nav">
+        <a class="back-link" href="{{ url_for('main.index') }}">&lt;</a>
+        <div>
+          <div class="detail-title">Peminjaman Ruangan</div>
+          <div class="detail-subtitle">Pilih ruangan yang ingin dipinjam</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="booking-shell">
+      <header class="booking-hero">
+        <h1>Ruangan Tersedia</h1>
+        <p>Pilih ruangan aula atau ruang senat untuk diajukan peminjamannya</p>
+      </header>
+
+      <section class="room-grid booking-grid">
+        {% for room in rooms %}
+          <a class="booking-card" href="{{ url_for('main.room_booking', room_id=room.id) }}">
+            <div class="booking-card-media">
+              <div class="booking-icon"></div>
+            </div>
+            <div class="booking-card-body">
+              <div class="booking-card-header">
+                <h3>{{ room.room_name }}</h3>
+                <span class="chevron">&gt;</span>
+              </div>
+              <p class="booking-card-sub">
+                {% set building_name = building_map.get(room.building_id) %}
+                {{ building_name or "Ruangan untuk kegiatan kampus" }}
+              </p>
+              <div class="room-meta">
+                <span class="chip">
+                  <span class="chip-icon">ID</span>
+                  {{ room.room_code or "-" }}
+                </span>
+                <span class="chip">
+                  <span class="chip-icon">CAP</span>
+                  {{ room.capacity or "-" }} orang
+                </span>
+                <span class="chip">{{ room.room_type or "-" }}</span>
+              </div>
+            </div>
+          </a>
+        {% else %}
+          <div class="panel">Belum ada ruangan.</div>
+        {% endfor %}
+      </section>
+    </div>
+  </section>
+{% endblock %}

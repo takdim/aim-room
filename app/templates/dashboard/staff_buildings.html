@@ -1,0 +1,132 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Gedung{% endblock %}
+
+{% set active_menu = "buildings" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">🏢</span>
+        <h2>Kelola Gedung</h2>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-open="building-modal">
+        <span class="btn-icon">+</span> Tambah
+      </button>
+    </header>
+
+    <section class="toolbar toolbar-compact">
+      <form method="get" class="search">
+        <input name="q" type="search" placeholder="Cari gedung..." value="{{ q }}" />
+      </form>
+    </section>
+
+    <section class="table-wrapper">
+<section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nama Gedung</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for building in buildings %}
+            <tr>
+              <td class="cell-code"><strong>{{ building.id }}</strong></td>
+              <td class="cell-name">{{ building.building_name or "-" }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn-ghost" data-edit
+                  data-id="{{ building.id }}"
+                  data-name="{{ building.building_name or '' }}">✎</button>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus gedung ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="building_id" value="{{ building.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="3" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+
+  <div class="modal-backdrop" data-modal="building-modal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="building-modal-title">Tambah Gedung</h3>
+        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+      </div>
+      <form method="post" id="building-form">
+        <input type="hidden" name="action" value="add" />
+        <input type="hidden" name="building_id" value="" />
+        <div class="field">
+          <label for="building_id_input">ID Gedung (opsional)</label>
+          <input id="building_id_input" name="building_id_input" type="number" min="1" />
+        </div>
+        <div class="field">
+          <label for="building_name">Nama Gedung</label>
+          <input id="building_name" name="building_name" type="text" required />
+        </div>
+        <button type="submit" class="primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const buildingModalBtn = document.querySelector('[data-modal-open="building-modal"]');
+    const buildingBackdrop = document.querySelector('[data-modal="building-modal"]');
+    const buildingClose = buildingBackdrop.querySelector('[data-modal-close]');
+    const buildingForm = document.getElementById('building-form');
+    const buildingIdInput = document.getElementById('building_id_input');
+    const buildingNameInput = document.getElementById('building_name');
+    const buildingTitle = document.getElementById('building-modal-title');
+
+    const openBuildingModal = () => {
+      buildingBackdrop.classList.add('open');
+      buildingBackdrop.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeBuildingModal = () => {
+      buildingBackdrop.classList.remove('open');
+      buildingBackdrop.setAttribute('aria-hidden', 'true');
+    };
+
+    buildingModalBtn.addEventListener('click', () => {
+      buildingTitle.textContent = 'Tambah Gedung';
+      buildingForm.action.value = 'add';
+      buildingForm.building_id.value = '';
+      buildingIdInput.value = '';
+      buildingIdInput.disabled = false;
+      buildingNameInput.value = '';
+      openBuildingModal();
+    });
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        buildingTitle.textContent = 'Edit Gedung';
+        buildingForm.action.value = 'update';
+        buildingForm.building_id.value = btn.dataset.id;
+        buildingIdInput.value = btn.dataset.id;
+        buildingIdInput.disabled = true;
+        buildingNameInput.value = btn.dataset.name;
+        openBuildingModal();
+      });
+    });
+
+    buildingClose.addEventListener('click', closeBuildingModal);
+    buildingBackdrop.addEventListener('click', (e) => {
+      if (e.target === buildingBackdrop) closeBuildingModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeBuildingModal();
+    });
+  </script>
+{% endblock %}

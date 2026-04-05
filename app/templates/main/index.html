@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Pemantauan Ruangan Kelas{% endblock %}
+
+{% block content %}
+  <section class="home-page">
+    <header class="home-topbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <span></span>
+        </div>
+        <div>
+          <div class="brand-title">SIKARAENG</div>
+          <div class="brand-subtitle">Sistem Informasi Kegiatan & Ruang</div>
+        </div>
+      </div>
+      <nav class="home-nav">
+        <a href="{{ url_for('main.booking_index') }}">Peminjaman Ruangan</a>
+      </nav>
+    </header>
+
+    <div class="home-shell">
+      <header class="home-hero">
+        <div>
+          <h1>Pemantauan Ruangan Kelas</h1>
+          <p>Lihat jadwal dan status ruangan kelas hari ini</p>
+        </div>
+        <form method="get" class="day-select-form">
+          <select name="day" onchange="this.form.submit()" class="day-select-input">
+            {% for day in days %}
+              <option value="{{ day }}" {% if day == selected_day %}selected{% endif %}>{{ day }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </header>
+
+      <div class="filter-section">
+        <div class="legend">
+          <div class="legend-item"><span class="dot dot-live"></span> Sedang Berlangsung</div>
+          <div class="legend-item"><span class="dot dot-scheduled"></span> Ada Jadwal</div>
+          <div class="legend-item"><span class="dot dot-empty"></span> Kosong</div>
+        </div>
+      </div>
+
+      <section class="room-grid home-grid">
+        {% for room in rooms %}
+          {% set current = current_by_room.get(room.id) %}
+          {% set has_schedule = has_schedule_by_room.get(room.id) %}
+          <a class="room-card home-card" href="{{ url_for('main.room_schedule', room_id=room.id, day=selected_day) }}">
+            <div class="room-header home-card-header">
+              <div class="room-title">
+                {% if current %}
+                  <span class="dot dot-live"></span>
+                {% elif has_schedule %}
+                  <span class="dot dot-scheduled"></span>
+                {% else %}
+                  <span class="dot dot-empty"></span>
+                {% endif %}
+                <div>
+                  <h3>{{ room.room_name }}</h3>
+                </div>
+              </div>
+              <div class="chevron">&gt;</div>
+            </div>
+
+            <div class="room-meta">
+              <span class="chip">
+                <span class="chip-icon">ID</span>
+                {{ room.room_code or "-" }}
+              </span>
+              <span class="chip">
+                <span class="chip-icon">CAP</span>
+                {{ room.capacity or "-" }}
+              </span>
+            </div>
+
+            {% if current %}
+              <div class="room-info">
+                <p class="room-time">{{ current.time_range }}</p>
+                <p class="room-course">{{ current.course_name }}</p>
+                <p class="room-lecturer">{{ current.lecturer_name }}</p>
+              </div>
+            {% elif has_schedule %}
+              <div class="room-info muted">Ada jadwal hari {{ selected_day }}</div>
+            {% else %}
+              <div class="room-info muted">Tidak ada jadwal hari {{ selected_day }}</div>
+            {% endif %}
+          </a>
+        {% else %}
+          <div class="panel">Belum ada ruangan.</div>
+        {% endfor %}
+      </section>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Jadwal Kelas{% endblock %}
+
+{% block content %}
+  <section class="content" style="padding: 24px 28px 40px;">
+    <div class="topbar">
+      <h1>Jadwal Kelas</h1>
+    </div>
+
+    <header class="page-header">
+      <h2>{{ course.course_name }}</h2>
+      <p>Jadwal hari ini: {{ today_name }}</p>
+      {% if active_semester %}
+        <p>Semester aktif: {{ active_semester.name }}</p>
+      {% endif %}
+    </header>
+
+    <section class="table-card" style="margin-top: 16px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Jam</th>
+            <th>Pengajar</th>
+            <th>Ruangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in schedule_rows %}
+            {% set lecturer = row[1] %}
+            {% set room = row[2] %}
+            {% set sched = row[0] %}
+            <tr>
+              <td>{{ sched.start_time }} - {{ sched.end_time }}</td>
+              <td>{{ lecturer.lecturer_name }}</td>
+              <td>{{ room.room_name }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="3">Belum ada jadwal untuk hari ini.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+{% endblock %}

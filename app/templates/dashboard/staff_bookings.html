@@ -1,0 +1,76 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Peminjaman{% endblock %}
+
+{% set active_menu = "bookings" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">📋</span>
+        <h2>Kelola Peminjaman</h2>
+      </div>
+    </header>
+
+    <section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Ruangan</th>
+            <th>Peminjam</th>
+            <th>Organisasi</th>
+            <th>Tanggal</th>
+            <th>Waktu</th>
+            <th>Tujuan</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking, room in booking_rows %}
+            <tr>
+              <td>{{ room.room_name }}</td>
+              <td>{{ booking.borrower_name or "-" }}</td>
+              <td>{{ booking.organization or "-" }}</td>
+              <td>{{ booking.booking_date or "-" }}</td>
+              <td>
+                {% if booking.start_time and booking.end_time %}
+                  {{ booking.start_time.strftime("%H:%M") }} - {{ booking.end_time.strftime("%H:%M") }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>{{ booking.purpose or "-" }}</td>
+              <td>
+                {% set status_value = booking.status or "Menunggu" %}
+                <span class="badge status-{{ status_value|lower }}">{{ status_value }}</span>
+              </td>
+              <td class="cell-actions">
+                <form method="post" class="inline-form">
+                  <input type="hidden" name="action" value="approve" />
+                  <input type="hidden" name="booking_id" value="{{ booking.id }}" />
+                  <button type="submit" class="btn-ghost" title="Setujui">✓</button>
+                </form>
+                <form method="post" class="inline-form">
+                  <input type="hidden" name="action" value="reject" />
+                  <input type="hidden" name="booking_id" value="{{ booking.id }}" />
+                  <button type="submit" class="btn-ghost" title="Tolak">✕</button>
+                </form>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus peminjaman ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="booking_id" value="{{ booking.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+{% endblock %}

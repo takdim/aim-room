@@ -1,0 +1,200 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Jadwal{% endblock %}
+
+{% set active_menu = "schedules" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">⏱</span>
+        <h2>Kelola Jadwal</h2>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-open="schedule-modal">
+        <span class="btn-icon">+</span> Tambah
+      </button>
+    </header>
+
+    <section class="toolbar toolbar-compact">
+      <form method="get" class="search">
+        <input name="q" type="search" placeholder="Cari jadwal..." value="{{ q }}" />
+      </form>
+    </section>
+
+    <section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Hari</th>
+            <th>Jam</th>
+            <th>Matakuliah</th>
+            <th>Pengajar</th>
+            <th>Ruangan</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in schedules %}
+            {% set sched = row[0] %}
+            {% set course = row[1] %}
+            {% set lecturer = row[2] %}
+            {% set room = row[3] %}
+            <tr>
+              <td>{{ sched.day_name }}</td>
+              <td>{{ sched.start_time }} - {{ sched.end_time }}</td>
+              <td class="cell-name">{{ course.course_name }}</td>
+              <td>{{ lecturer.lecturer_name }}</td>
+              <td>{{ room.room_name }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn-ghost" data-edit
+                  data-id="{{ sched.id }}"
+                  data-day="{{ sched.day_name }}"
+                  data-start="{{ sched.start_time }}"
+                  data-end="{{ sched.end_time }}"
+                  data-course="{{ course.id }}"
+                  data-lecturer="{{ lecturer.id }}"
+                  data-room="{{ room.id }}"
+                  data-semester="{{ sched.semester_id }}">✎</button>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus jadwal ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="schedule_id" value="{{ sched.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+
+  <div class="modal-backdrop" data-modal="schedule-modal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="schedule-modal-title">Tambah Jadwal</h3>
+        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+      </div>
+      <form method="post" id="schedule-form">
+        <input type="hidden" name="action" value="add" />
+        <input type="hidden" name="schedule_id" value="" />
+        <div class="field">
+          <label for="semester_id">Semester</label>
+          <select id="semester_id" name="semester_id" required>
+            <option value="">Pilih semester</option>
+            {% for semester in semesters %}
+              <option value="{{ semester.id }}">{{ semester.name }}{% if semester.is_active %} (aktif){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="day_name">Hari</label>
+          <select id="day_name" name="day_name" required>
+            <option value="">Pilih hari</option>
+            <option value="Senin">Senin</option>
+            <option value="Selasa">Selasa</option>
+            <option value="Rabu">Rabu</option>
+            <option value="Kamis">Kamis</option>
+            <option value="Jumat">Jumat</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="start_time">Jam Mulai</label>
+          <input id="start_time" name="start_time" type="time" required />
+        </div>
+        <div class="field">
+          <label for="end_time">Jam Selesai</label>
+          <input id="end_time" name="end_time" type="time" required />
+        </div>
+        <div class="field">
+          <label for="course_id">Kelas</label>
+          <select id="course_id" name="course_id" required>
+            <option value="">Pilih kelas</option>
+            {% for course in courses %}
+              <option value="{{ course.id }}">{{ course.course_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="lecturer_id">Pengajar</label>
+          <select id="lecturer_id" name="lecturer_id" required>
+            <option value="">Pilih pengajar</option>
+            {% for lecturer in lecturers %}
+              <option value="{{ lecturer.id }}">{{ lecturer.lecturer_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="room_id">Ruangan</label>
+          <select id="room_id" name="room_id" required>
+            <option value="">Pilih ruangan</option>
+            {% for room in rooms %}
+              <option value="{{ room.id }}">{{ room.room_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const scheduleModalBtn = document.querySelector('[data-modal-open="schedule-modal"]');
+    const scheduleBackdrop = document.querySelector('[data-modal="schedule-modal"]');
+    const scheduleClose = scheduleBackdrop.querySelector('[data-modal-close]');
+    const scheduleForm = document.getElementById('schedule-form');
+    const scheduleTitle = document.getElementById('schedule-modal-title');
+
+    const openScheduleModal = () => {
+      scheduleBackdrop.classList.add('open');
+      scheduleBackdrop.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeScheduleModal = () => {
+      scheduleBackdrop.classList.remove('open');
+      scheduleBackdrop.setAttribute('aria-hidden', 'true');
+    };
+
+    scheduleModalBtn.addEventListener('click', () => {
+      scheduleTitle.textContent = 'Tambah Jadwal';
+      scheduleForm.action.value = 'add';
+      scheduleForm.schedule_id.value = '';
+      scheduleForm.day_name.value = '';
+      scheduleForm.start_time.value = '';
+      scheduleForm.end_time.value = '';
+      scheduleForm.course_id.value = '';
+      scheduleForm.lecturer_id.value = '';
+      scheduleForm.room_id.value = '';
+      scheduleForm.semester_id.value = '';
+      openScheduleModal();
+    });
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        scheduleTitle.textContent = 'Edit Jadwal';
+        scheduleForm.action.value = 'update';
+        scheduleForm.schedule_id.value = btn.dataset.id;
+        scheduleForm.day_name.value = btn.dataset.day;
+        scheduleForm.start_time.value = btn.dataset.start;
+        scheduleForm.end_time.value = btn.dataset.end;
+        scheduleForm.course_id.value = btn.dataset.course;
+        scheduleForm.lecturer_id.value = btn.dataset.lecturer;
+        scheduleForm.room_id.value = btn.dataset.room;
+        scheduleForm.semester_id.value = btn.dataset.semester;
+        openScheduleModal();
+      });
+    });
+
+    scheduleClose.addEventListener('click', closeScheduleModal);
+    scheduleBackdrop.addEventListener('click', (e) => {
+      if (e.target === scheduleBackdrop) closeScheduleModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeScheduleModal();
+    });
+  </script>
+{% endblock %}

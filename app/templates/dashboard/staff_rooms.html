@@ -1,0 +1,172 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Ruangan{% endblock %}
+
+{% set active_menu = "rooms" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">�</span>
+        <h2>Kelola Ruangan</h2>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-open="room-modal">
+        <span class="btn-icon">+</span> Tambah
+      </button>
+    </header>
+
+    <section class="toolbar toolbar-compact">
+      <form method="get" class="search">
+        <input name="q" type="search" placeholder="Cari ruangan..." value="{{ q }}" />
+      </form>
+    </section>
+
+    <section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Kode</th>
+            <th>Nama</th>
+            <th>Tipe</th>
+            <th>Kapasitas</th>
+            <th>Dapat Dipinjam</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for room in rooms %}
+            <tr>
+              <td class="cell-code"><strong>{{ room.room_code or "-" }}</strong></td>
+              <td class="cell-name">{{ room.room_name }}</td>
+              <td><span class="badge">{{ room.room_type or "-" }}</span></td>
+              <td class="cell-capacity">{{ room.capacity or "-" }}</td>
+              <td>
+                <span class="badge badge-neutral">
+                  {% if room.room_type in ["Aula", "Ruang Senat"] %}
+                    Ya
+                  {% else %}
+                    Tidak
+                  {% endif %}
+                </span>
+              </td>
+              <td class="cell-actions">
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus ruangan ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="room_id" value="{{ room.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+
+  <div class="modal-backdrop" data-modal="room-modal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="room-modal-title">Tambah Ruangan</h3>
+        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+      </div>
+      <form method="post" id="room-form">
+        <input type="hidden" name="action" value="add" />
+        <input type="hidden" name="room_id" value="" />
+        <div class="field">
+          <label for="room_name">Nama Ruangan</label>
+          <input id="room_name" name="room_name" type="text" required />
+        </div>
+        <div class="field">
+          <label for="room_code">Kode Ruangan (opsional)</label>
+          <input id="room_code" name="room_code" type="text" />
+        </div>
+        <div class="field">
+          <label for="building_id">Gedung (opsional)</label>
+          <select id="building_id" name="building_id">
+            <option value="">Pilih gedung</option>
+            {% for building in buildings %}
+              <option value="{{ building.id }}">{{ building.building_name }} (ID {{ building.id }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="floor">Lantai (opsional)</label>
+          <input id="floor" name="floor" type="number" min="0" />
+        </div>
+        <div class="field">
+          <label for="capacity">Kapasitas (opsional)</label>
+          <input id="capacity" name="capacity" type="number" min="0" />
+        </div>
+        <div class="field">
+          <label for="room_type">Tipe Ruangan (opsional)</label>
+          <select id="room_type" name="room_type">
+            <option value="">Pilih tipe</option>
+            <option value="Ruang Kelas">Ruang Kelas</option>
+            <option value="Aula">Aula</option>
+            <option value="Ruang Senat">Ruang Senat</option>
+          </select>
+        </div>
+        <button type="submit" class="primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const roomModalBtn = document.querySelector('[data-modal-open="room-modal"]');
+    const roomBackdrop = document.querySelector('[data-modal="room-modal"]');
+    const roomClose = roomBackdrop.querySelector('[data-modal-close]');
+    const roomForm = document.getElementById('room-form');
+    const roomTitle = document.getElementById('room-modal-title');
+
+    const openRoomModal = () => {
+      roomBackdrop.classList.add('open');
+      roomBackdrop.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeRoomModal = () => {
+      roomBackdrop.classList.remove('open');
+      roomBackdrop.setAttribute('aria-hidden', 'true');
+    };
+
+    roomModalBtn.addEventListener('click', () => {
+      roomTitle.textContent = 'Tambah Ruangan';
+      roomForm.action.value = 'add';
+      roomForm.room_id.value = '';
+      roomForm.room_name.value = '';
+      roomForm.room_code.value = '';
+        roomForm.building_id.value = '';
+      roomForm.floor.value = '';
+      roomForm.capacity.value = '';
+      roomForm.room_type.value = '';
+      openRoomModal();
+    });
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        roomTitle.textContent = 'Edit Ruangan';
+        roomForm.action.value = 'update';
+        roomForm.room_id.value = btn.dataset.id;
+        roomForm.room_name.value = btn.dataset.name;
+        roomForm.room_code.value = btn.dataset.code;
+        roomForm.building_id.value = btn.dataset.building;
+        roomForm.floor.value = btn.dataset.floor;
+        roomForm.capacity.value = btn.dataset.capacity;
+        roomForm.room_type.value = btn.dataset.type;
+        openRoomModal();
+      });
+    });
+
+    roomClose.addEventListener('click', closeRoomModal);
+    roomBackdrop.addEventListener('click', (e) => {
+      if (e.target === roomBackdrop) closeRoomModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeRoomModal();
+    });
+  </script>
+{% endblock %}

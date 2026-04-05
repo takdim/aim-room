@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="dashboard-shell">
+    <header class="dashboard-topbar">
+      <a href="{{ url_for('dashboard.staff_home') }}" class="dashboard-brand">
+        <div class="dashboard-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="1"></circle>
+            <path d="M12 1v6m0 6v6"></path>
+            <path d="M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24"></path>
+            <path d="M1 12h6m6 0h6"></path>
+            <path d="M4.22 19.78l4.24-4.24m3.08-3.08l4.24-4.24"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="dashboard-title">SIKARAENG</div>
+          <div class="dashboard-subtitle">{{ full_name }} ({{ session.get('role', 'staff')|title }})</div>
+        </div>
+      </a>
+      <nav class="dashboard-actions">
+        <a href="{{ url_for('main.index') }}" class="dashboard-action-link">
+          <span class="action-icon">🏠</span> Publik
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="dashboard-action-link">
+          <span class="action-icon">🚪</span> Keluar
+        </a>
+      </nav>
+    </header>
+
+    <nav class="dashboard-tabs">
+      <a class="dashboard-tab {% if active_menu == 'buildings' %}active{% endif %}" href="{{ url_for('dashboard.staff_buildings') }}">
+        <span class="tab-icon">🏢</span> Gedung
+      </a>
+      <a class="dashboard-tab {% if active_menu == 'rooms' %}active{% endif %}" href="{{ url_for('dashboard.staff_rooms') }}">
+        <span class="tab-icon">🏛</span> Ruangan
+      </a>
+      <a class="dashboard-tab {% if active_menu == 'lecturers' %}active{% endif %}" href="{{ url_for('dashboard.staff_lecturers') }}">
+        <span class="tab-icon">👨‍🏫</span> Pengajar
+      </a>
+      <a class="dashboard-tab {% if active_menu == 'courses' %}active{% endif %}" href="{{ url_for('dashboard.staff_courses') }}">
+        <span class="tab-icon">📚</span> Matakuliah
+      </a>
+      <a class="dashboard-tab {% if active_menu == 'semesters' %}active{% endif %}" href="{{ url_for('dashboard.staff_semesters') }}">
+        <span class="tab-icon">📅</span> Semester
+      </a>
+      <a class="dashboard-tab {% if active_menu == 'schedules' %}active{% endif %}" href="{{ url_for('dashboard.staff_schedules') }}">
+        <span class="tab-icon">⏱</span> Jadwal
+      </a>
+      <a class="dashboard-tab {% if active_menu == 'bookings' %}active{% endif %}" href="{{ url_for('dashboard.staff_bookings') }}">
+        <span class="tab-icon">📋</span> Peminjaman
+      </a>
+    </nav>
+
+    <section class="dashboard-content">
+      {% block dashboard_content %}{% endblock %}
+    </section>
+  </div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Form Peminjaman{% endblock %}
+
+{% block content %}
+  <section class="booking-page">
+    <header class="booking-topbar">
+      <div class="booking-nav">
+        <a class="back-link" href="{{ url_for('main.index') }}">&lt;</a>
+        <div>
+          <div class="detail-title">Form Peminjaman</div>
+          <div class="detail-subtitle">{{ room.room_name }}</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="booking-shell booking-form-shell">
+      <aside class="booking-aside">
+        <div class="booking-card">
+          <div class="booking-card-media">
+            <div class="booking-icon"></div>
+          </div>
+          <div class="booking-card-body">
+            <div class="booking-card-header">
+              <h3>{{ room.room_name }}</h3>
+            </div>
+            <p class="booking-card-sub">
+              {{ building_name or "Ruangan untuk kegiatan kampus" }}
+            </p>
+            <div class="room-meta">
+              <span class="chip">
+                <span class="chip-icon">ID</span>
+                {{ room.room_code or "-" }}
+              </span>
+              <span class="chip">
+                <span class="chip-icon">CAP</span>
+                {{ room.capacity or "-" }}
+              </span>
+              <span class="chip">{{ room.room_type or "-" }}</span>
+            </div>
+
+            <div class="booking-last">
+              <div class="booking-last-title">Peminjaman Terakhir</div>
+              {% if last_booking %}
+                <div class="booking-last-card">
+                  <div class="booking-last-date">{{ last_booking.booking_date }}</div>
+                  <div class="booking-last-purpose">{{ last_booking.purpose or "-" }}</div>
+                  <span class="status-badge status-pending">{{ last_booking.status or "Menunggu" }}</span>
+                </div>
+              {% else %}
+                <div class="booking-last-card muted">Belum ada peminjaman.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="booking-form">
+        <div class="form-title">
+          <span class="form-icon">CAL</span>
+          <h2>Form Peminjaman Ruangan</h2>
+        </div>
+
+        {% if error %}
+          <p class="flash flash-error">{{ error }}</p>
+        {% endif %}
+        {% if success %}
+          <p class="flash flash-info">{{ success }}</p>
+        {% endif %}
+
+        <form method="post" class="form-grid">
+          <div class="field">
+            <label for="borrower_name">Nama Peminjam *</label>
+            <input id="borrower_name" name="borrower_name" type="text" placeholder="Masukkan nama lengkap" required />
+          </div>
+          <div class="field">
+            <label for="phone_number">Nomor Telepon *</label>
+            <input id="phone_number" name="phone_number" type="text" placeholder="08xxxxxxxxxx" required />
+          </div>
+          <div class="field">
+            <label for="borrower_email">Email</label>
+            <input id="borrower_email" name="borrower_email" type="email" placeholder="email@contoh.com" />
+          </div>
+          <div class="field">
+            <label for="organization">Organisasi/Lembaga *</label>
+            <input id="organization" name="organization" type="text" placeholder="Nama organisasi" required />
+          </div>
+          <div class="field full">
+            <label for="purpose">Tujuan Peminjaman *</label>
+            <textarea id="purpose" name="purpose" rows="4" placeholder="Jelaskan tujuan peminjaman ruangan" required></textarea>
+          </div>
+          <div class="field">
+            <label for="booking_date">Tanggal Peminjaman *</label>
+            <input id="booking_date" name="booking_date" type="date" required />
+          </div>
+          <div class="field">
+            <label for="start_time">Waktu Mulai *</label>
+            <input id="start_time" name="start_time" type="time" required />
+          </div>
+          <div class="field">
+            <label for="end_time">Waktu Selesai *</label>
+            <input id="end_time" name="end_time" type="time" required />
+          </div>
+          <div class="field full">
+            <label for="notes">Catatan Tambahan</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Catatan tambahan (opsional)"></textarea>
+          </div>
+          <div class="field full">
+            <button type="submit" class="primary">Ajukan Peminjaman</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </section>
+{% endblock %}

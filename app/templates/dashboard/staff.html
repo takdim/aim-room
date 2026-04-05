@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Staff Dashboard{% endblock %}
+
+{% set active_menu = "dashboard" %}
+
+{% block dashboard_content %}
+  <div class="topbar">
+    <h1>Dashboard</h1>
+    <form method="post" action="{{ url_for('dashboard.staff_select_semester') }}">
+      <select name="semester_id" onchange="this.form.submit()">
+        <option value="">Pilih semester</option>
+        {% for semester in semesters %}
+          <option value="{{ semester.id }}"
+            {% if active_semester and semester.id == active_semester.id %}selected{% endif %}>
+            {{ semester.name }}{% if semester.is_active %} (aktif){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <header class="page-header">
+    <h2>Selamat datang, {{ full_name }}</h2>
+    <p>Ringkasan data terbaru.</p>
+  </header>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <p class="stat-label">Total Kelas</p>
+      <p class="stat-value">{{ total_courses }}</p>
+    </article>
+    <article class="stat-card">
+      <p class="stat-label">Total Pengajar</p>
+      <p class="stat-value">{{ total_lecturers }}</p>
+    </article>
+    <article class="stat-card">
+      <p class="stat-label">Total Ruangan</p>
+      <p class="stat-value">{{ total_rooms }}</p>
+    </article>
+  </section>
+{% endblock %}

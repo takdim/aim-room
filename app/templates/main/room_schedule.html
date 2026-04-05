@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Detail Ruangan{% endblock %}
+
+{% block content %}
+  <section class="detail-page">
+    <header class="detail-topbar">
+      <a class="back-link" href="{{ url_for('main.index', day=selected_day) }}">&lt;</a>
+      <div>
+        <div class="detail-title">{{ room.room_name }}</div>
+        <div class="detail-subtitle">Detail Ruangan Kelas</div>
+      </div>
+    </header>
+
+    <div class="detail-shell">
+      <section class="room-hero">
+        <div class="room-hero-content">
+          <h1>{{ room.room_name or "-" }}</h1>
+          <p>{{ room.description or "Ruang kelas lantai 1" }}</p>
+          <div class="room-hero-meta">
+            <span class="chip">
+              <span class="chip-icon">🗂</span>
+              {{ room.room_code or "-" }}
+            </span>
+            <span class="chip">
+              <span class="chip-icon">👥</span>
+              Kapasitas {{ room.capacity or "-" }}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="detail-toolbar">
+        <div>
+          <h2>Jadwal Hari {{ selected_day }}</h2>
+        </div>
+        <form method="get" class="day-select-form">
+          <select name="day" onchange="this.form.submit()" class="day-select-input">
+            {% for day in days %}
+              <option value="{{ day }}" {% if day == selected_day %}selected{% endif %}>{{ day }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </section>
+
+      <section class="schedule-list">
+        {% for row in schedule_rows %}
+          {% set sched = row[0] %}
+          {% set lecturer = row[1] %}
+          {% set course = row[2] %}
+          <article class="schedule-card">
+            <div class="schedule-time">
+              <div class="time-icon">⏰</div>
+              <div class="time-content">
+                <div class="time-main">{{ sched.start_time.strftime("%H:%M") if sched.start_time else "-" }}</div>
+                <div class="time-sub">{{ sched.end_time.strftime("%H:%M") if sched.end_time else "-" }}</div>
+              </div>
+            </div>
+            <div class="schedule-info">
+              <h3>{{ course.course_name }}</h3>
+              <div class="schedule-meta">
+                <span class="meta-item">
+                  <span class="meta-icon">#</span>
+                  Kode: {{ course.course_code or "-" }}
+                </span>
+              </div>
+            </div>
+            <div class="schedule-lecturer">
+              <div class="schedule-meta">
+                <span class="meta-icon">👨‍🏫</span>
+                {{ lecturer.lecturer_name }}
+              </div>
+              <div class="schedule-meta">
+                <span class="meta-icon">📍</span>
+                {{ room.room_code or "-" }}
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>Belum ada jadwal untuk hari {{ selected_day }}.</p>
+          </div>
+        {% endfor %}
+      </section>
+    </div>
+  </section>
+{% endblock %}

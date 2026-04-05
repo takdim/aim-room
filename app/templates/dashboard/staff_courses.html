@@ -1,0 +1,128 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Matakuliah{% endblock %}
+
+{% set active_menu = "courses" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">📚</span>
+        <h2>Kelola Matakuliah</h2>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-open="course-modal">
+        <span class="btn-icon">+</span> Tambah
+      </button>
+    </header>
+
+    <section class="toolbar toolbar-compact">
+      <form method="get" class="search">
+        <input name="q" type="search" placeholder="Cari matakuliah..." value="{{ q }}" />
+      </form>
+    </section>
+
+    <section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Nama Matakuliah</th>
+            <th>Kode</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in courses %}
+            <tr>
+              <td class="cell-name">{{ course.course_name }}</td>
+              <td>{{ course.course_code or "-" }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn-ghost" data-edit
+                  data-id="{{ course.id }}"
+                  data-name="{{ course.course_name }}"
+                  data-code="{{ course.course_code or '' }}">✎</button>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus matakuliah ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="course_id" value="{{ course.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="3" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+
+  <div class="modal-backdrop" data-modal="course-modal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="course-modal-title">Tambah Kelas</h3>
+        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+      </div>
+      <form method="post" id="course-form">
+        <input type="hidden" name="action" value="add" />
+        <input type="hidden" name="course_id" value="" />
+        <div class="field">
+          <label for="course_name">Nama Kelas</label>
+          <input id="course_name" name="course_name" type="text" required />
+        </div>
+        <div class="field">
+          <label for="course_code">Kode Kelas (opsional)</label>
+          <input id="course_code" name="course_code" type="text" />
+        </div>
+        <button type="submit" class="primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const courseModalBtn = document.querySelector('[data-modal-open="course-modal"]');
+    const courseBackdrop = document.querySelector('[data-modal="course-modal"]');
+    const courseClose = courseBackdrop.querySelector('[data-modal-close]');
+    const courseForm = document.getElementById('course-form');
+    const courseTitle = document.getElementById('course-modal-title');
+
+    const openCourseModal = () => {
+      courseBackdrop.classList.add('open');
+      courseBackdrop.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeCourseModal = () => {
+      courseBackdrop.classList.remove('open');
+      courseBackdrop.setAttribute('aria-hidden', 'true');
+    };
+
+    courseModalBtn.addEventListener('click', () => {
+      courseTitle.textContent = 'Tambah Kelas';
+      courseForm.action.value = 'add';
+      courseForm.course_id.value = '';
+      courseForm.course_name.value = '';
+      courseForm.course_code.value = '';
+      openCourseModal();
+    });
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        courseTitle.textContent = 'Edit Kelas';
+        courseForm.action.value = 'update';
+        courseForm.course_id.value = btn.dataset.id;
+        courseForm.course_name.value = btn.dataset.name;
+        courseForm.course_code.value = btn.dataset.code;
+        openCourseModal();
+      });
+    });
+
+    courseClose.addEventListener('click', closeCourseModal);
+    courseBackdrop.addEventListener('click', (e) => {
+      if (e.target === courseBackdrop) closeCourseModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeCourseModal();
+    });
+  </script>
+{% endblock %}

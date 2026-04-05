@@ -1,0 +1,128 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Pengajar{% endblock %}
+
+{% set active_menu = "lecturers" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon">👨‍🏫</span>
+        <h2>Kelola Pengajar</h2>
+      </div>
+      <button type="button" class="btn btn-primary" data-modal-open="lecturer-modal">
+        <span class="btn-icon">+</span> Tambah
+      </button>
+    </header>
+
+    <section class="toolbar toolbar-compact">
+      <form method="get" class="search">
+        <input name="q" type="search" placeholder="Cari pengajar..." value="{{ q }}" />
+      </form>
+    </section>
+
+    <section class="table-wrapper">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Nama Pengajar</th>
+            <th>NIDN</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lecturer in lecturers %}
+            <tr>
+              <td class="cell-name">{{ lecturer.lecturer_name }}</td>
+              <td>{{ lecturer.nidn or "-" }}</td>
+              <td class="cell-actions">
+                <button type="button" class="btn-ghost" data-edit
+                  data-id="{{ lecturer.id }}"
+                  data-name="{{ lecturer.lecturer_name }}"
+                  data-nidn="{{ lecturer.nidn or '' }}">✎</button>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus pengajar ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="lecturer_id" value="{{ lecturer.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="3" class="cell-empty">Belum ada data.</td>
+            </tr>
+          {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  </section>
+
+  <div class="modal-backdrop" data-modal="lecturer-modal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="lecturer-modal-title">Tambah Pengajar</h3>
+        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+      </div>
+      <form method="post" id="lecturer-form">
+        <input type="hidden" name="action" value="add" />
+        <input type="hidden" name="lecturer_id" value="" />
+        <div class="field">
+          <label for="lecturer_name">Nama Pengajar</label>
+          <input id="lecturer_name" name="lecturer_name" type="text" required />
+        </div>
+        <div class="field">
+          <label for="nidn">NIDN (opsional)</label>
+          <input id="nidn" name="nidn" type="text" />
+        </div>
+        <button type="submit" class="primary">Simpan</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const lecturerModalBtn = document.querySelector('[data-modal-open="lecturer-modal"]');
+    const lecturerBackdrop = document.querySelector('[data-modal="lecturer-modal"]');
+    const lecturerClose = lecturerBackdrop.querySelector('[data-modal-close]');
+    const lecturerForm = document.getElementById('lecturer-form');
+    const lecturerTitle = document.getElementById('lecturer-modal-title');
+
+    const openLecturerModal = () => {
+      lecturerBackdrop.classList.add('open');
+      lecturerBackdrop.setAttribute('aria-hidden', 'false');
+    };
+
+    const closeLecturerModal = () => {
+      lecturerBackdrop.classList.remove('open');
+      lecturerBackdrop.setAttribute('aria-hidden', 'true');
+    };
+
+    lecturerModalBtn.addEventListener('click', () => {
+      lecturerTitle.textContent = 'Tambah Pengajar';
+      lecturerForm.action.value = 'add';
+      lecturerForm.lecturer_id.value = '';
+      lecturerForm.lecturer_name.value = '';
+      lecturerForm.nidn.value = '';
+      openLecturerModal();
+    });
+
+    document.querySelectorAll('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        lecturerTitle.textContent = 'Edit Pengajar';
+        lecturerForm.action.value = 'update';
+        lecturerForm.lecturer_id.value = btn.dataset.id;
+        lecturerForm.lecturer_name.value = btn.dataset.name;
+        lecturerForm.nidn.value = btn.dataset.nidn;
+        openLecturerModal();
+      });
+    });
+
+    lecturerClose.addEventListener('click', closeLecturerModal);
+    lecturerBackdrop.addEventListener('click', (e) => {
+      if (e.target === lecturerBackdrop) closeLecturerModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLecturerModal();
+    });
+  </script>
+{% endblock %}
