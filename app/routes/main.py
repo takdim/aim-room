@@ -404,9 +404,9 @@ def download_pakta_template():
 
 @main_bp.get("/qr/<int:room_id>")
 def room_qr(room_id: int):
-    """Return a PNG QR code image for the event booking form of this room."""
+    """Return a PNG QR code image linking to the room schedule page."""
     Room.query.get_or_404(room_id)
-    target_url = url_for("main.event_booking", room_id=room_id, _external=True)
+    target_url = url_for("main.room_schedule", room_id=room_id, _external=True)
     img = qrcode.make(target_url)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -419,12 +419,12 @@ def room_qr_page(room_id: int):
     """Display QR code on a printable page."""
     room = Room.query.get_or_404(room_id)
     qr_url = url_for("main.room_qr", room_id=room_id)
-    booking_url = url_for("main.event_booking", room_id=room_id, _external=True)
+    schedule_url = url_for("main.room_schedule", room_id=room_id, _external=True)
     return render_template(
         "main/qr_page.html",
         room=room,
         qr_url=qr_url,
-        booking_url=booking_url,
+        booking_url=schedule_url,
     )
 
 
