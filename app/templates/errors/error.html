@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ error_code }} – SIKARAENG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-size: 1.15em;
+        vertical-align: middle;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #f1f5f9;
+        font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+      }
+
+      /* ── TOPBAR ── */
+      .err-topbar {
+        background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+        padding: 0 28px;
+        display: flex; align-items: center; justify-content: space-between;
+        height: 60px;
+        box-shadow: 0 2px 12px #1e3a8a33;
+      }
+      .err-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+      .err-brand-icon {
+        width: 36px; height: 36px; border-radius: 10px;
+        background: #ffffff25;
+        display: grid; place-items: center;
+        font-weight: 800; font-size: .95rem; color: #fff;
+        border: 1.5px solid #ffffff40;
+      }
+      .err-brand-name { font-weight: 800; color: #fff; font-size: .95rem; letter-spacing: .02em; }
+      .err-brand-sub  { font-size: .7rem; color: #ffffff99; margin-top: 1px; }
+
+      /* ── BODY ── */
+      .err-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+      }
+      .err-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 32px #1e3a8a12;
+        padding: 56px 48px;
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+      }
+      .err-icon-wrap {
+        width: 88px; height: 88px;
+        border-radius: 50%;
+        display: grid; place-items: center;
+        margin: 0 auto 28px;
+      }
+      .err-icon-wrap .material-symbols-outlined {
+        font-size: 2.8rem !important;
+      }
+
+      .err-icon-wrap.code-404 { background: #eff6ff; color: #2563eb; }
+      .err-icon-wrap.code-403 { background: #fff7ed; color: #ea580c; }
+      .err-icon-wrap.code-500 { background: #fef2f2; color: #dc2626; }
+      .err-icon-wrap.code-503 { background: #f0fdf4; color: #16a34a; }
+      .err-icon-wrap.code-default { background: #f8fafc; color: #64748b; }
+
+      .err-code {
+        font-size: 4.5rem;
+        font-weight: 900;
+        line-height: 1;
+        margin: 0 0 8px;
+        background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .err-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 12px;
+      }
+      .err-desc {
+        font-size: .92rem;
+        color: #64748b;
+        line-height: 1.6;
+        margin: 0 0 36px;
+      }
+      .err-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .err-btn {
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-size: .88rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity .15s, transform .12s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .err-btn:hover { opacity: .88; transform: translateY(-1px); }
+      .err-btn-primary {
+        background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+        color: #fff;
+      }
+      .err-btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+      }
+
+      /* ── FOOTER ── */
+      .err-footer {
+        padding: 20px 28px;
+        text-align: center;
+        font-size: .78rem;
+        color: #94a3b8;
+        border-top: 1px solid #e2e8f0;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+
+    <header class="err-topbar">
+      <a class="err-brand" href="{{ url_for('main.index') }}">
+        <div class="err-brand-icon">S</div>
+        <div>
+          <div class="err-brand-name">SIKARAENG</div>
+          <div class="err-brand-sub">Sistem Informasi Kegiatan &amp; Ruang</div>
+        </div>
+      </a>
+    </header>
+
+    <div class="err-wrap">
+      <div class="err-card">
+        <div class="err-icon-wrap code-{{ error_code if error_code in ['404','403','500','503'] else 'default' }}">
+          <span class="material-symbols-outlined">{{ error_icon }}</span>
+        </div>
+
+        <div class="err-code">{{ error_code }}</div>
+        <h1 class="err-title">{{ error_title }}</h1>
+        <p class="err-desc">{{ error_description }}</p>
+
+        <div class="err-actions">
+          <a href="{{ url_for('main.index') }}" class="err-btn err-btn-primary">
+            <span class="material-symbols-outlined">home</span>
+            Kembali ke Beranda
+          </a>
+          <a href="javascript:history.back()" class="err-btn err-btn-secondary">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Halaman Sebelumnya
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="err-footer">
+      &copy; 2026 AIM – Archipelago Innovation Management. All rights reserved.
+    </footer>
+
+  </body>
+</html>
