@@ -216,10 +216,13 @@ def get_or_create_lecturer(name, cache):
     return lec
 
 
-def ensure_room(code, name, building_id, room_cache):
-    """Buat ruang baru jika belum ada di DB."""
+def ensure_room(code, name, building_name, room_cache):
+    """Buat ruang baru jika belum ada di DB. Cari building by name."""
     if code in room_cache:
         return room_cache[code]
+    from app.models.reference import Building
+    building = Building.query.filter(Building.building_name.ilike(f"%{building_name}%")).first()
+    building_id = building.id if building else None
     room = Room(room_code=code, room_name=name, building_id=building_id)
     db.session.add(room)
     db.session.flush()
@@ -243,8 +246,8 @@ with app.app_context():
 
     # Pastikan R.103 dan R.104 tersedia sebagai ruang terpisah
     # Building 12 = Departemen Sastra Indonesia
-    ensure_room("R.103", "R.103 Departemen Sastra Indonesia", 12, room_cache)
-    ensure_room("R.104", "R.104 Departemen Sastra Indonesia", 12, room_cache)
+    ensure_room("R.103", "R.103 Departemen Sastra Indonesia", "Sastra Indonesia", room_cache)
+    ensure_room("R.104", "R.104 Departemen Sastra Indonesia", "Sastra Indonesia", room_cache)
 
     for day, start, end, course_name, class_name, room_key, lec_names in SCHEDULES:
         room_code = ROOM_CODE_MAP.get(room_key, room_key)
