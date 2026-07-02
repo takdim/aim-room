@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from app.extensions import db, migrate
 
@@ -19,6 +21,9 @@ def create_app(config_object: str = "config.DevelopmentConfig") -> Flask:
     except OSError:
         pass
 
+    # Ensure upload folder exists
+    os.makedirs(app.config.get("UPLOAD_FOLDER", "instance/uploads"), exist_ok=True)
+
     db.init_app(app)
     migrate.init_app(app, db)
     from app.extensions import limiter
@@ -30,10 +35,12 @@ def create_app(config_object: str = "config.DevelopmentConfig") -> Flask:
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.main import main_bp
+    from app.routes.approval import approval_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(approval_bp)
     register_commands(app)
 
     return app

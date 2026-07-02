@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Daftar Peminjaman Ruangan{% endblock %}
+
+{% block content %}
+  <section class="booking-page">
+    <header class="booking-topbar">
+      <div class="booking-nav">
+        <a class="back-link" href="{{ url_for('main.booking_index') }}">&lt;</a>
+        <div>
+          <div class="detail-title">Daftar Peminjaman</div>
+          <div class="detail-subtitle">Semua pengajuan peminjaman ruangan</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="booking-shell">
+      <section class="table-wrapper">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Ruangan</th>
+              <th>Nama Peminjam</th>
+              <th>Organisasi</th>
+              <th>Tanggal Penggunaan</th>
+              <th>Waktu</th>
+              <th>Tujuan</th>
+              <th>Jenis</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in bookings %}
+              <tr>
+                <td>{{ booking.room.room_name if booking.room else "-" }}</td>
+                <td>{{ booking.display_name }}</td>
+                <td>{{ booking.organization or "-" }}</td>
+                <td>{{ booking.booking_date.strftime("%d %b %Y") if booking.booking_date else "-" }}</td>
+                <td>
+                  {% if booking.start_time and booking.end_time %}
+                    {{ booking.start_time.strftime("%H:%M") }} – {{ booking.end_time.strftime("%H:%M") }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>{{ booking.purpose or "-" }}</td>
+                <td>
+                  {% if booking.booking_type == "event" %}
+                    <span class="badge" style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;">Event</span>
+                  {% else %}
+                    <span class="badge">Biasa</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% set s = booking.status or "Menunggu Staff" %}
+                  <span class="badge status-{{ s|lower|replace(' ', '-') }}">{{ s }}</span>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="8" class="cell-empty">Belum ada data peminjaman.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </section>
+{% endblock %}

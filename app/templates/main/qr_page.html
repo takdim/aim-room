@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}QR Code — {{ room.room_name }}{% endblock %}
+
+{% block content %}
+<style>
+  body { background: #f1f5f9; }
+
+  /* ── TOPBAR ── */
+  .qr-topbar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+    box-shadow: 0 2px 12px #1e3a8a33;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .qr-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .qr-brand-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: #ffffff25; border: 1.5px solid #ffffff40;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: .95rem; color: #fff;
+  }
+  .qr-brand-name { font-weight: 800; color: #fff; font-size: .95rem; letter-spacing: .02em; }
+  .qr-brand-sub  { font-size: .7rem; color: #ffffff99; }
+  .qr-nav a {
+    color: #ffffffcc; text-decoration: none; font-size: .85rem; font-weight: 600;
+    padding: 7px 16px; border-radius: 8px;
+    background: #ffffff18; border: 1px solid #ffffff28;
+    transition: background .15s;
+  }
+  .qr-nav a:hover { background: #ffffff30; color: #fff; }
+
+  /* ── HERO ── */
+  .qr-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 40px 28px 60px;
+    color: #fff; text-align: center;
+  }
+  .qr-hero h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 6px; }
+  .qr-hero p  { font-size: .9rem; color: #ffffffaa; margin: 0; }
+
+  /* ── CARD ── */
+  .qr-wrap {
+    max-width: 480px; margin: -36px auto 40px;
+    padding: 0 16px;
+  }
+  .qr-card {
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 8px 32px #1e3a8a22;
+    padding: 36px 28px 32px;
+    text-align: center;
+  }
+  .qr-room-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg,#eff6ff,#fff1f2);
+    border: 1.5px solid #bfdbfe; border-radius: 999px;
+    padding: 5px 16px; font-size: .8rem; font-weight: 700;
+    color: #1e3a8a; margin-bottom: 24px;
+  }
+  .qr-img-box {
+    display: inline-block;
+    background: #f8fafc;
+    border: 2.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .qr-img-box img { width: 220px; height: 220px; display: block; }
+  .qr-url {
+    font-size: .78rem; color: #94a3b8;
+    word-break: break-all; margin-bottom: 28px;
+    background: #f8fafc; border-radius: 8px;
+    padding: 8px 12px; border: 1px solid #e2e8f0;
+  }
+  .qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .qr-btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #1e3a8a, #be123c);
+    color: #fff; text-decoration: none; font-weight: 700; font-size: .88rem;
+    padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .qr-btn-primary:hover { opacity: .88; }
+  .qr-btn-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fff; color: #1e3a8a; font-weight: 700; font-size: .88rem;
+    padding: 10px 22px; border-radius: 10px;
+    border: 1.5px solid #bfdbfe; cursor: pointer; text-decoration: none;
+    transition: background .15s;
+  }
+  .qr-btn-ghost:hover { background: #eff6ff; }
+
+  /* ── Print ── */
+  @media print {
+    .qr-topbar, .qr-hero, .qr-actions { display: none !important; }
+    .qr-card { box-shadow: none; border: 1px solid #e2e8f0; }
+    .qr-wrap { margin-top: 0; }
+  }
+</style>
+
+<!-- TOPBAR -->
+<nav class="qr-topbar">
+  <a class="qr-brand" href="{{ url_for('main.index') }}">
+    <div class="qr-brand-icon">S</div>
+    <div>
+      <div class="qr-brand-name">SIKARAENG</div>
+      <div class="qr-brand-sub">Sistem Peminjaman Ruangan</div>
+    </div>
+  </a>
+  <div class="qr-nav">
+    <a href="{{ url_for('main.booking_index') }}">← Kembali</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="qr-hero">
+  <h1>QR Code Peminjaman</h1>
+  <p>Scan untuk mengajukan peminjaman ruangan</p>
+</div>
+
+<!-- CARD -->
+<div class="qr-wrap">
+  <div class="qr-card">
+    <div class="qr-room-badge"><span class="material-symbols-outlined">account_balance</span> {{ room.room_name }}</div>
+
+    <div class="qr-img-box">
+      <img src="{{ qr_url }}" alt="QR Code {{ room.room_name }}" />
+    </div>
+
+    <div class="qr-url">{{ booking_url }}</div>
+
+    <div class="qr-actions">
+      <a href="{{ qr_url }}" download="qr_{{ room.room_name }}.png" class="qr-btn-primary"><span class="material-symbols-outlined">download</span> Download PNG</a>
+      <button onclick="window.print()" class="qr-btn-ghost"><span class="material-symbols-outlined">print</span> Cetak</button>
+    </div>
+  </div>
+</div>
+{% endblock %}

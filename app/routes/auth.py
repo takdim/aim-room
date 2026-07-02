@@ -2,7 +2,7 @@ from functools import wraps
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-from app.models.user import User
+from app.models.user import User, APPROVAL_ROLES
 from app.extensions import limiter
 
 auth_bp = Blueprint("auth", __name__)
@@ -51,7 +51,11 @@ def login():
 
         if user.role == "admin":
             return redirect(url_for("dashboard.admin_home"))
-        return redirect(url_for("dashboard.staff_home"))
+        elif user.role == "staff":
+            return redirect(url_for("dashboard.staff_home"))
+        else:
+            # kasubag, ktu, wd2, dekan → approval dashboard
+            return redirect(url_for("approval.approval_home"))
 
     return render_template("auth/login.html")
 

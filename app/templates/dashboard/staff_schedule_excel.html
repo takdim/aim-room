@@ -1,0 +1,262 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Import Jadwal dari Excel{% endblock %}
+
+{% set active_menu = "schedule_excel" %}
+
+{% block dashboard_content %}
+<section class="dashboard-card">
+  <header class="card-header">
+    <div class="card-title">
+      <span class="card-icon"><span class="material-symbols-outlined">upload_file</span></span>
+      <h2>Import Jadwal dari Excel</h2>
+    </div>
+  </header>
+
+  <div style="padding:1.25rem 1.5rem;max-width:820px;">
+
+    <!-- Step 1: Download Template -->
+    <div class="xls-step">
+      <div class="xls-step-badge">1</div>
+      <div class="xls-step-body">
+        <div class="xls-step-title">Download Template</div>
+        <p class="xls-step-desc">Gunakan template resmi agar format kolom sesuai. Template sudah dilengkapi dropdown otomatis dari data yang tersedia di sistem.</p>
+        <a href="{{ url_for('dashboard.staff_schedule_excel_template') }}" class="xls-dl-btn">
+          <span class="material-symbols-outlined">download</span> Download template_jadwal.xlsx
+        </a>
+      </div>
+    </div>
+
+    <!-- Step 2: Panduan Kolom -->
+    <div class="xls-step">
+      <div class="xls-step-badge">2</div>
+      <div class="xls-step-body">
+        <div class="xls-step-title">Isi Template (mulai baris 3)</div>
+        <p class="xls-step-desc">Baris 1 = header, baris 2 = catatan otomatis. Data diisi mulai <strong>baris 3</strong>.</p>
+
+        <div class="xls-col-section">
+          <div class="xls-col-label xls-required">Kolom Wajib</div>
+          <div class="xls-col-grid">
+            <div class="xls-col-card">
+              <span class="xls-col-letter">A</span>
+              <span class="xls-col-name">Matakuliah</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+            <div class="xls-col-card">
+              <span class="xls-col-letter">B</span>
+              <span class="xls-col-name">Kelas</span>
+              <span class="xls-col-type">A / B / C</span>
+            </div>
+            <div class="xls-col-card">
+              <span class="xls-col-letter">C</span>
+              <span class="xls-col-name">Pengajar 1</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+            <div class="xls-col-card">
+              <span class="xls-col-letter">F</span>
+              <span class="xls-col-name">Ruangan</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+            <div class="xls-col-card">
+              <span class="xls-col-letter">G</span>
+              <span class="xls-col-name">Hari</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+            <div class="xls-col-card">
+              <span class="xls-col-letter">H</span>
+              <span class="xls-col-name">Jam Mulai</span>
+              <span class="xls-col-type">HH:MM</span>
+            </div>
+            <div class="xls-col-card">
+              <span class="xls-col-letter">I</span>
+              <span class="xls-col-name">Jam Selesai</span>
+              <span class="xls-col-type">HH:MM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="xls-col-section" style="margin-top:.75rem;">
+          <div class="xls-col-label xls-optional">Kolom Opsional</div>
+          <div class="xls-col-grid">
+            <div class="xls-col-card xls-col-opt">
+              <span class="xls-col-letter xls-opt-letter">D</span>
+              <span class="xls-col-name">Pengajar 2</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+            <div class="xls-col-card xls-col-opt">
+              <span class="xls-col-letter xls-opt-letter">E</span>
+              <span class="xls-col-name">Pengajar 3</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+            <div class="xls-col-card xls-col-opt">
+              <span class="xls-col-letter xls-opt-letter">J</span>
+              <span class="xls-col-name">Gedung</span>
+              <span class="xls-col-type xls-dropdown">▾ dropdown</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Upload -->
+    <div class="xls-step">
+      <div class="xls-step-badge">3</div>
+      <div class="xls-step-body">
+        <div class="xls-step-title">Upload &amp; Import</div>
+        <p class="xls-step-desc">Pilih file Excel yang sudah diisi, tentukan semester, lalu klik Import.</p>
+
+        <form method="post" enctype="multipart/form-data" class="xls-form">
+          <div class="xls-form-row">
+            <div class="field" style="flex:1;">
+              <label for="excel_file">File Excel (.xlsx / .xls) <span style="color:#e53e3e">*</span></label>
+              <input id="excel_file" name="excel_file" type="file" accept=".xlsx,.xls" required />
+            </div>
+            <div class="field" style="flex:1;">
+              <label for="semester_id">Semester <span style="color:#e53e3e">*</span></label>
+              <select id="semester_id" name="semester_id" required>
+                <option value="">-- Pilih Semester --</option>
+                {% for sem in semesters %}
+                  <option value="{{ sem.id }}" {% if active_semester and active_semester.id == sem.id %}selected{% endif %}>
+                    {{ sem.name }}{% if sem.is_active %} (Aktif){% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;margin-top:.25rem;">
+            <button type="submit" class="primary" style="display:inline-flex;align-items:center;gap:6px;">
+              <span class="material-symbols-outlined">upload</span> Import Jadwal
+            </button>
+            <a href="{{ url_for('dashboard.staff_schedules') }}" class="btn-ghost" style="font-size:.85rem;">
+              &larr; Kembali ke Daftar Jadwal
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+/* ── Excel Import Page ── */
+.xls-step {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+.xls-step-badge {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary, #1e3a8a);
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+.xls-step-body {
+  flex: 1;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  background: var(--surface, #fff);
+}
+.xls-step-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--text, #1a202c);
+  margin-bottom: .3rem;
+}
+.xls-step-desc {
+  font-size: .82rem;
+  color: #64748b;
+  margin: 0 0 .75rem;
+  line-height: 1.5;
+}
+.xls-dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: #1e3a8a;
+  color: #fff;
+  font-size: .83rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .15s;
+}
+.xls-dl-btn:hover { background: #1e40af; }
+.xls-dl-btn .material-symbols-outlined { font-size: 18px; }
+
+/* Column reference */
+.xls-col-section { }
+.xls-col-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  margin-bottom: .4rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.xls-required { background: #dbeafe; color: #1e40af; }
+.xls-optional { background: #f3f4f6; color: #6b7280; }
+.xls-col-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.xls-col-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: .5rem .65rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  min-width: 80px;
+  text-align: center;
+}
+.xls-col-card.xls-col-opt {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+}
+.xls-col-letter {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  line-height: 1;
+}
+.xls-opt-letter { color: #6b7280; }
+.xls-col-name {
+  font-size: .75rem;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.2;
+}
+.xls-col-type {
+  font-size: .68rem;
+  color: #94a3b8;
+  line-height: 1;
+}
+.xls-col-type.xls-dropdown { color: #3b82f6; }
+
+/* Upload form */
+.xls-form { }
+.xls-form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: .5rem;
+}
+</style>
+{% endblock %}

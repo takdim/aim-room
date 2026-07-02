@@ -8,7 +8,7 @@
   <section class="dashboard-card">
     <header class="card-header">
       <div class="card-title">
-        <span class="card-icon">🏢</span>
+        <span class="card-icon"><span class="material-symbols-outlined">business</span></span>
         <h2>Kelola Gedung</h2>
       </div>
       <button type="button" class="btn btn-primary" data-modal-open="building-modal">
@@ -40,11 +40,11 @@
               <td class="cell-actions">
                 <button type="button" class="btn-ghost" data-edit
                   data-id="{{ building.id }}"
-                  data-name="{{ building.building_name or '' }}">✎</button>
+                  data-name="{{ building.building_name or '' }}"><span class="material-symbols-outlined">edit</span></button>
                 <form method="post" class="inline-form" onsubmit="return confirm('Hapus gedung ini?')">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="building_id" value="{{ building.id }}" />
-                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
                 </form>
               </td>
             </tr>
@@ -62,7 +62,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="building-modal-title">Tambah Gedung</h3>
-        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+        <button type="button" class="btn-ghost" data-modal-close><span class="material-symbols-outlined">close</span></button>
       </div>
       <form method="post" id="building-form">
         <input type="hidden" name="action" value="add" />

@@ -11,3 +11,5 @@ class Room(db.Model):
     floor = db.Column(db.Integer)
     capacity = db.Column(db.Integer)
     room_type = db.Column(db.String(50))
+
+    building = db.relationship("Building", foreign_keys=[building_id], lazy="joined")

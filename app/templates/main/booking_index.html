@@ -1,57 +1,199 @@
 {% extends "base.html" %}
 
-{% block title %}Peminjaman Ruangan{% endblock %}
+{% block title %}Peminjaman Ruangan — SIKARAENG{% endblock %}
 
 {% block content %}
-  <section class="booking-page">
-    <header class="booking-topbar">
-      <div class="booking-nav">
-        <a class="back-link" href="{{ url_for('main.index') }}">&lt;</a>
-        <div>
-          <div class="detail-title">Peminjaman Ruangan</div>
-          <div class="detail-subtitle">Pilih ruangan yang ingin dipinjam</div>
-        </div>
-      </div>
-    </header>
+<style>
+  body { background: #f1f5f9; }
 
-    <div class="booking-shell">
-      <header class="booking-hero">
-        <h1>Ruangan Tersedia</h1>
-        <p>Pilih ruangan aula atau ruang senat untuk diajukan peminjamannya</p>
-      </header>
+  /* ── TOPBAR ── */
+  .bki-topbar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    height: 60px; padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px #1e3a8a33;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .bki-back {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: #ffffffcc; font-size: .88rem; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px;
+    background: #ffffff18; border: 1px solid #ffffff28;
+    transition: background .15s;
+  }
+  .bki-back:hover { background: #ffffff30; color: #fff; }
+  .bki-brand { display: flex; align-items: center; gap: 8px; }
+  .bki-brand-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #ffffff25; border: 1.5px solid #ffffff40;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: .85rem; color: #fff;
+  }
+  .bki-brand-name { font-weight: 800; color: #fff; font-size: .88rem; }
 
-      <section class="room-grid booking-grid">
-        {% for room in rooms %}
-          <a class="booking-card" href="{{ url_for('main.room_booking', room_id=room.id) }}">
-            <div class="booking-card-media">
-              <div class="booking-icon"></div>
-            </div>
-            <div class="booking-card-body">
-              <div class="booking-card-header">
-                <h3>{{ room.room_name }}</h3>
-                <span class="chevron">&gt;</span>
-              </div>
-              <p class="booking-card-sub">
-                {% set building_name = building_map.get(room.building_id) %}
-                {{ building_name or "Ruangan untuk kegiatan kampus" }}
-              </p>
-              <div class="room-meta">
-                <span class="chip">
-                  <span class="chip-icon">ID</span>
-                  {{ room.room_code or "-" }}
-                </span>
-                <span class="chip">
-                  <span class="chip-icon">CAP</span>
-                  {{ room.capacity or "-" }} orang
-                </span>
-                <span class="chip">{{ room.room_type or "-" }}</span>
-              </div>
-            </div>
-          </a>
-        {% else %}
-          <div class="panel">Belum ada ruangan.</div>
-        {% endfor %}
-      </section>
+  /* ── HERO ── */
+  .bki-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 30px 28px 56px; color: #fff;
+  }
+  .bki-hero-inner { max-width: 920px; margin: 0 auto; }
+  .bki-hero h1 { font-size: 1.75rem; font-weight: 800; margin: 0 0 6px; }
+  .bki-hero p  { color: #ffffff99; font-size: .9rem; margin: 0 0 18px; }
+
+  /* Info strip */
+  .bki-info-strip {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .bki-info-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: #ffffff15; border: 1px solid #ffffff28;
+    border-radius: 8px; padding: 5px 12px;
+    font-size: .78rem; color: #ffffffcc;
+  }
+
+  /* ── BODY ── */
+  .bki-body { max-width: 920px; margin: -24px auto 0; padding: 0 20px 56px; }
+
+  /* ── NOTICE ── */
+  .bki-notice {
+    background: #fff; border-radius: 14px; padding: 14px 18px;
+    border-left: 4px solid #3b82f6;
+    box-shadow: 0 1px 4px #0000000d; margin-bottom: 20px;
+    font-size: .83rem; color: #334155; line-height: 1.7;
+  }
+  .bki-notice strong { color: #1e3a8a; }
+  .bki-notice ul { margin: 4px 0 0 1rem; padding: 0; }
+
+  /* ── GRID ── */
+  .bki-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── ROOM CARD ── */
+  .bki-card {
+    background: #fff; border-radius: 16px;
+    text-decoration: none; color: inherit;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 1px 3px #0000000a;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+    position: relative;
+  }
+  .bki-card::before {
+    content: '';
+    display: block; height: 4px;
+    background: linear-gradient(90deg, #1e3a8a, #be123c);
+  }
+  .bki-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 28px #1e3a8a1a;
+    border-color: #bfdbfe;
+  }
+
+  /* Card media (icon placeholder) */
+  .bki-card-media {
+    background: linear-gradient(135deg, #eff6ff, #fef2f2);
+    display: flex; align-items: center; justify-content: center;
+    height: 80px;
+    font-size: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .bki-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+  .bki-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .bki-card-name { font-weight: 700; font-size: .97rem; color: #0f172a; }
+  .bki-card-building { font-size: .78rem; color: #64748b; margin-top: 2px; }
+  .bki-card-chevron { color: #be123c; font-size: 1.1rem; font-weight: 700; flex-shrink: 0; }
+
+  .bki-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bki-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 7px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    font-size: .72rem; font-weight: 600; color: #475569;
+  }
+  .bki-chip-lbl { color: #94a3b8; font-weight: 500; }
+
+  .bki-cta {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px; border-radius: 10px; margin-top: 2px;
+    background: linear-gradient(135deg, #1e3a8a, #be123c);
+    color: #fff; font-weight: 700; font-size: .85rem;
+    transition: opacity .15s;
+  }
+  .bki-card:hover .bki-cta { opacity: .9; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .bki-topbar { padding: 0 14px; }
+    .bki-hero   { padding: 22px 14px 44px; }
+    .bki-hero h1 { font-size: 1.35rem; }
+    .bki-body   { padding: 0 12px 40px; }
+    .bki-grid   { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- TOPBAR -->
+<header class="bki-topbar">
+  <a class="bki-back" href="{{ url_for('main.index') }}">← Beranda</a>
+  <div class="bki-brand">
+    <div class="bki-brand-icon">S</div>
+    <div class="bki-brand-name">SIKARAENG</div>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="bki-hero">
+  <div class="bki-hero-inner">
+    <h1>Peminjaman Ruangan</h1>
+    <p>Ajukan peminjaman ruangan aula atau ruang senat FIB</p>
+    <div class="bki-info-strip">
+      <span class="bki-info-pill"><span class="material-symbols-outlined">content_paste</span> Wajib upload pakta integritas</span>
+      <span class="bki-info-pill"><span class="material-symbols-outlined">description</span> Wajib upload surat permohonan</span>
+      <span class="bki-info-pill"><span class="material-symbols-outlined">schedule</span> Jam 08.00 – 16.00</span>
     </div>
-  </section>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="bki-body">
+
+  <!-- Grid -->
+  <div class="bki-grid">
+    {% for room in rooms %}
+      {% set building_name = building_map.get(room.building_id) %}
+      <a class="bki-card" href="{{ url_for('main.room_booking', room_id=room.id) }}">
+        <div class="bki-card-media"><span class="material-symbols-outlined">account_balance</span></div>
+        <div class="bki-card-body">
+          <div class="bki-card-top">
+            <div>
+              <div class="bki-card-name">{{ room.room_name }}</div>
+              <div class="bki-card-building">{{ building_name or "FIB — Ruangan Kegiatan" }}</div>
+            </div>
+            <span class="bki-card-chevron">›</span>
+          </div>
+          <div class="bki-chips">
+            <span class="bki-chip"><span class="bki-chip-lbl">ID</span> {{ room.room_code or "-" }}</span>
+            <span class="bki-chip"><span class="bki-chip-lbl">CAP</span> {{ room.capacity or "-" }} orang</span>
+            {% if room.room_type %}
+              <span class="bki-chip">{{ room.room_type }}</span>
+            {% endif %}
+          </div>
+          <div class="bki-cta">Ajukan Peminjaman →</div>
+        </div>
+      </a>
+    {% else %}
+      <div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:#94a3b8;">
+        Belum ada ruangan tersedia.
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
 {% endblock %}
+
+

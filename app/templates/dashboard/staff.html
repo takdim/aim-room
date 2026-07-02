@@ -1,42 +1,38 @@
 {% extends "dashboard/base.html" %}
 
-{% block title %}Staff Dashboard{% endblock %}
-
+{% block title %}Dashboard Staff — SIKARAENG{% endblock %}
 {% set active_menu = "dashboard" %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Selamat datang, {{ full_name }}{% endblock %}
 
 {% block dashboard_content %}
-  <div class="topbar">
-    <h1>Dashboard</h1>
-    <form method="post" action="{{ url_for('dashboard.staff_select_semester') }}">
-      <select name="semester_id" onchange="this.form.submit()">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <div></div>
+    <form method="post" action="{{ url_for('dashboard.staff_select_semester') }}" style="display:flex;align-items:center;gap:8px;">
+      <label style="font-size:.78rem;font-weight:600;color:#64748b;">Semester aktif:</label>
+      <select name="semester_id" onchange="this.form.submit()" style="padding:7px 32px 7px 11px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f9fafb;font-size:.84rem;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;outline:none;">
         <option value="">Pilih semester</option>
         {% for semester in semesters %}
-          <option value="{{ semester.id }}"
-            {% if active_semester and semester.id == active_semester.id %}selected{% endif %}>
-            {{ semester.name }}{% if semester.is_active %} (aktif){% endif %}
+          <option value="{{ semester.id }}" {% if active_semester and semester.id == active_semester.id %}selected{% endif %}>
+            {{ semester.name }}{% if semester.is_active %} <span class="material-symbols-outlined">star</span>{% endif %}
           </option>
         {% endfor %}
       </select>
     </form>
   </div>
 
-  <header class="page-header">
-    <h2>Selamat datang, {{ full_name }}</h2>
-    <p>Ringkasan data terbaru.</p>
-  </header>
-
-  <section class="stats-grid">
-    <article class="stat-card">
-      <p class="stat-label">Total Kelas</p>
-      <p class="stat-value">{{ total_courses }}</p>
-    </article>
-    <article class="stat-card">
-      <p class="stat-label">Total Pengajar</p>
-      <p class="stat-value">{{ total_lecturers }}</p>
-    </article>
-    <article class="stat-card">
-      <p class="stat-label">Total Ruangan</p>
-      <p class="stat-value">{{ total_rooms }}</p>
-    </article>
-  </section>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Kelas</div>
+      <div class="stat-value">{{ total_courses }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Pengajar</div>
+      <div class="stat-value">{{ total_lecturers }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Ruangan</div>
+      <div class="stat-value">{{ total_rooms }}</div>
+    </div>
+  </div>
 {% endblock %}

@@ -1,115 +1,363 @@
 {% extends "base.html" %}
 
-{% block title %}Form Peminjaman{% endblock %}
+{% block title %}Form Peminjaman — {{ room.room_name }}{% endblock %}
 
 {% block content %}
-  <section class="booking-page">
-    <header class="booking-topbar">
-      <div class="booking-nav">
-        <a class="back-link" href="{{ url_for('main.index') }}">&lt;</a>
+<style>
+  body { background: #f1f5f9; }
+
+  /* ── TOPBAR ── */
+  .bf-topbar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    height: 60px; padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px #1e3a8a33;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .bf-back {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: #ffffffcc; font-size: .88rem; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px;
+    background: #ffffff18; border: 1px solid #ffffff28;
+    transition: background .15s;
+  }
+  .bf-back:hover { background: #ffffff30; color: #fff; }
+  .bf-brand { display: flex; align-items: center; gap: 8px; }
+  .bf-brand-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #ffffff25; border: 1.5px solid #ffffff40;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: .85rem; color: #fff;
+  }
+  .bf-brand-name { font-weight: 800; color: #fff; font-size: .88rem; }
+
+  /* ── HERO ── */
+  .bf-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 24px 28px 52px; color: #fff;
+  }
+  .bf-hero-inner { max-width: 1000px; margin: 0 auto; }
+  .bf-hero h1 { font-size: 1.5rem; font-weight: 800; margin: 0 0 4px; }
+  .bf-hero p  { color: #ffffff90; font-size: .85rem; margin: 0; }
+
+  /* ── BODY ── */
+  .bf-body {
+    max-width: 1000px; margin: -22px auto 0;
+    padding: 0 20px 56px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  /* ── SIDEBAR ── */
+  .bf-sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+  .bf-info-card {
+    background: #fff; border-radius: 16px;
+    box-shadow: 0 1px 4px #0000000d;
+    border: 1.5px solid #e2e8f0;
+    overflow: hidden;
+  }
+  .bf-info-card-top {
+    background: linear-gradient(135deg, #eff6ff, #fef2f2);
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  .bf-room-icon { font-size: 2.2rem; margin-bottom: 8px; }
+  .bf-room-name { font-weight: 800; font-size: 1rem; color: #0f172a; }
+  .bf-room-building { font-size: .75rem; color: #64748b; margin-top: 3px; }
+  .bf-info-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  .bf-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bf-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 7px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    font-size: .72rem; font-weight: 600; color: #475569;
+  }
+  .bf-chip-lbl { color: #94a3b8; font-weight: 500; }
+
+  .bf-section-label {
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: #94a3b8; margin-bottom: 4px;
+  }
+  .bf-dl-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 12px; border-radius: 10px;
+    background: linear-gradient(135deg, #1e3a8a, #be123c);
+    color: #fff; font-size: .8rem; font-weight: 700;
+    text-decoration: none; transition: opacity .15s;
+  }
+  .bf-dl-btn:hover { opacity: .88; }
+
+  .bf-last-booking {
+    background: #f8fafc; border-radius: 10px; padding: 10px 12px;
+    font-size: .78rem; color: #475569;
+  }
+  .bf-last-booking .date   { font-weight: 700; color: #1e3a8a; }
+  .bf-last-booking .purpose { color: #64748b; margin-top: 2px; }
+  .bf-last-booking .muted  { color: #94a3b8; font-style: italic; }
+
+  .bf-rules {
+    background: #fffbeb; border: 1px solid #fde68a;
+    border-radius: 10px; padding: 10px 12px;
+    font-size: .75rem; color: #78350f; line-height: 1.7;
+  }
+  .bf-rules ul { margin: 4px 0 0 1rem; padding: 0; }
+
+  /* ── FORM CARD ── */
+  .bf-form-card {
+    background: #fff; border-radius: 16px; padding: 24px 24px 28px;
+    box-shadow: 0 1px 4px #0000000d;
+    border: 1.5px solid #e2e8f0;
+  }
+  .bf-form-title {
+    font-size: 1.05rem; font-weight: 800; color: #0f172a;
+    margin: 0 0 20px; display: flex; align-items: center; gap: 8px;
+    padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* Flash */
+  .bf-flash {
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;
+    font-size: .84rem; display: flex; align-items: center; gap: 8px;
+  }
+  .bf-flash.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+  /* Section divider */
+  .bf-section {
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94a3b8;
+    padding: 14px 0 8px; border-top: 1px solid #f1f5f9; margin-top: 4px;
+  }
+  .bf-section:first-of-type { border-top: none; padding-top: 0; }
+
+  /* Field grid */
+  .bf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .bf-grid .full { grid-column: 1 / -1; }
+
+  .bf-field { display: flex; flex-direction: column; gap: 5px; }
+  .bf-field label {
+    font-size: .78rem; font-weight: 600; color: #374151;
+  }
+  .bf-field input,
+  .bf-field select,
+  .bf-field textarea {
+    width: 100%; padding: 9px 12px; border-radius: 10px;
+    border: 1.5px solid #e5e7eb; font-size: .87rem; color: #111827;
+    background: #f9fafb; outline: none;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+    font-family: inherit;
+  }
+  .bf-field input:focus,
+  .bf-field select:focus,
+  .bf-field textarea:focus {
+    border-color: #3b82f6; background: #fff;
+    box-shadow: 0 0 0 3px #3b82f620;
+  }
+  .bf-field select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 11px center; background-color: #f9fafb;
+    padding-right: 32px;
+  }
+  .bf-field input[type="file"] {
+    padding: 7px 10px; font-size: .82rem; cursor: pointer;
+  }
+  .bf-field-hint {
+    font-size: .74rem; color: #64748b; margin-top: 2px;
+  }
+  .bf-field-hint a { color: #1e3a8a; font-weight: 600; }
+
+  /* Submit */
+  .bf-submit {
+    width: 100%; padding: 11px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: .95rem; font-weight: 700;
+    background: linear-gradient(135deg, #1e3a8a, #be123c);
+    color: #fff; margin-top: 8px;
+    transition: opacity .15s, transform .1s;
+    letter-spacing: .02em;
+  }
+  .bf-submit:hover { opacity: .9; transform: translateY(-1px); }
+  .bf-submit:active { transform: translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .bf-body { grid-template-columns: 1fr; }
+    .bf-sidebar { order: 2; }
+    .bf-form-card { order: 1; }
+  }
+  @media (max-width: 540px) {
+    .bf-topbar { padding: 0 14px; }
+    .bf-hero   { padding: 18px 14px 44px; }
+    .bf-body   { padding: 0 12px 40px; }
+    .bf-grid   { grid-template-columns: 1fr; }
+    .bf-grid .full { grid-column: auto; }
+  }
+</style>
+
+<!-- TOPBAR -->
+<header class="bf-topbar">
+  <a class="bf-back" href="{{ url_for('main.booking_index') }}">← Pilih Ruangan</a>
+  <div class="bf-brand">
+    <div class="bf-brand-icon">S</div>
+    <div class="bf-brand-name">SIKARAENG</div>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="bf-hero">
+  <div class="bf-hero-inner">
+    <h1>Form Peminjaman Ruangan</h1>
+    <p>{{ room.room_name }} — Lengkapi data dan unggah dokumen yang diperlukan</p>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="bf-body">
+
+  <!-- SIDEBAR -->
+  <aside class="bf-sidebar">
+
+    <!-- Room info -->
+    <div class="bf-info-card">
+      <div class="bf-info-card-top">
+        <div class="bf-room-icon"><span class="material-symbols-outlined">account_balance</span></div>
+        <div class="bf-room-name">{{ room.room_name }}</div>
+        <div class="bf-room-building">{{ building_name or "FIB — Ruangan Kegiatan" }}</div>
+      </div>
+      <div class="bf-info-card-body">
+        <div class="bf-chips">
+          <span class="bf-chip"><span class="bf-chip-lbl">ID</span> {{ room.room_code or "-" }}</span>
+          <span class="bf-chip"><span class="bf-chip-lbl">CAP</span> {{ room.capacity or "-" }}</span>
+          {% if room.room_type %}<span class="bf-chip">{{ room.room_type }}</span>{% endif %}
+        </div>
+
+        {% if pakta_template %}
+          <div>
+            <div class="bf-section-label">Template Pakta Integritas</div>
+            <a class="bf-dl-btn" href="{{ url_for('main.download_pakta_template') }}">
+              <span class="material-symbols-outlined">download</span> Download Template
+            </a>
+          </div>
+        {% endif %}
+
         <div>
-          <div class="detail-title">Form Peminjaman</div>
-          <div class="detail-subtitle">{{ room.room_name }}</div>
+          <div class="bf-section-label">Peminjaman Terakhir</div>
+          <div class="bf-last-booking">
+            {% if last_booking %}
+              <div class="date">{{ last_booking.booking_date.strftime("%d %b %Y") if last_booking.booking_date else "-" }}</div>
+              <div class="purpose">{{ last_booking.purpose or "-" }}</div>
+            {% else %}
+              <div class="muted">Belum ada peminjaman.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="bf-rules">
+          <strong><span class="material-symbols-outlined">warning</span> Ketentuan:</strong>
+          <ul>
+            <li>Wajib upload pakta integritas bertanda tangan</li>
+            <li>Wajib upload surat permohonan (diketahui BEM)</li>
+            <li>Peminjam harus mahasiswa FIB</li>
+            <li>Jam: 08.00 – 16.00</li>
+            <li>Proses: Staff → Kasubag → KTU → WD2 → Dekan</li>
+          </ul>
         </div>
       </div>
-    </header>
-
-    <div class="booking-shell booking-form-shell">
-      <aside class="booking-aside">
-        <div class="booking-card">
-          <div class="booking-card-media">
-            <div class="booking-icon"></div>
-          </div>
-          <div class="booking-card-body">
-            <div class="booking-card-header">
-              <h3>{{ room.room_name }}</h3>
-            </div>
-            <p class="booking-card-sub">
-              {{ building_name or "Ruangan untuk kegiatan kampus" }}
-            </p>
-            <div class="room-meta">
-              <span class="chip">
-                <span class="chip-icon">ID</span>
-                {{ room.room_code or "-" }}
-              </span>
-              <span class="chip">
-                <span class="chip-icon">CAP</span>
-                {{ room.capacity or "-" }}
-              </span>
-              <span class="chip">{{ room.room_type or "-" }}</span>
-            </div>
-
-            <div class="booking-last">
-              <div class="booking-last-title">Peminjaman Terakhir</div>
-              {% if last_booking %}
-                <div class="booking-last-card">
-                  <div class="booking-last-date">{{ last_booking.booking_date }}</div>
-                  <div class="booking-last-purpose">{{ last_booking.purpose or "-" }}</div>
-                  <span class="status-badge status-pending">{{ last_booking.status or "Menunggu" }}</span>
-                </div>
-              {% else %}
-                <div class="booking-last-card muted">Belum ada peminjaman.</div>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <section class="booking-form">
-        <div class="form-title">
-          <span class="form-icon">CAL</span>
-          <h2>Form Peminjaman Ruangan</h2>
-        </div>
-
-        {% if error %}
-          <p class="flash flash-error">{{ error }}</p>
-        {% endif %}
-        {% if success %}
-          <p class="flash flash-info">{{ success }}</p>
-        {% endif %}
-
-        <form method="post" class="form-grid">
-          <div class="field">
-            <label for="borrower_name">Nama Peminjam *</label>
-            <input id="borrower_name" name="borrower_name" type="text" placeholder="Masukkan nama lengkap" required />
-          </div>
-          <div class="field">
-            <label for="phone_number">Nomor Telepon *</label>
-            <input id="phone_number" name="phone_number" type="text" placeholder="08xxxxxxxxxx" required />
-          </div>
-          <div class="field">
-            <label for="borrower_email">Email</label>
-            <input id="borrower_email" name="borrower_email" type="email" placeholder="email@contoh.com" />
-          </div>
-          <div class="field">
-            <label for="organization">Organisasi/Lembaga *</label>
-            <input id="organization" name="organization" type="text" placeholder="Nama organisasi" required />
-          </div>
-          <div class="field full">
-            <label for="purpose">Tujuan Peminjaman *</label>
-            <textarea id="purpose" name="purpose" rows="4" placeholder="Jelaskan tujuan peminjaman ruangan" required></textarea>
-          </div>
-          <div class="field">
-            <label for="booking_date">Tanggal Peminjaman *</label>
-            <input id="booking_date" name="booking_date" type="date" required />
-          </div>
-          <div class="field">
-            <label for="start_time">Waktu Mulai *</label>
-            <input id="start_time" name="start_time" type="time" required />
-          </div>
-          <div class="field">
-            <label for="end_time">Waktu Selesai *</label>
-            <input id="end_time" name="end_time" type="time" required />
-          </div>
-          <div class="field full">
-            <label for="notes">Catatan Tambahan</label>
-            <textarea id="notes" name="notes" rows="3" placeholder="Catatan tambahan (opsional)"></textarea>
-          </div>
-          <div class="field full">
-            <button type="submit" class="primary">Ajukan Peminjaman</button>
-          </div>
-        </form>
-      </section>
     </div>
-  </section>
+
+  </aside>
+
+  <!-- FORM -->
+  <div class="bf-form-card">
+    <div class="bf-form-title"><span class="material-symbols-outlined">content_paste</span> Formulir Pengajuan Peminjaman</div>
+
+    {% if error %}
+      <div class="bf-flash error"><span class="material-symbols-outlined">warning</span> {{ error }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+
+      <div class="bf-section">Data Peminjam</div>
+      <div class="bf-grid">
+        <div class="bf-field">
+          <label for="borrower_name">Nama Peminjam *</label>
+          <input id="borrower_name" name="borrower_name" type="text" placeholder="Nama lengkap" required />
+        </div>
+        <div class="bf-field">
+          <label for="name_on_pakta">Nama Sesuai Pakta Integritas *</label>
+          <input id="name_on_pakta" name="name_on_pakta" type="text" placeholder="Nama persis di pakta" required />
+        </div>
+        <div class="bf-field">
+          <label for="phone_number">Nomor Telepon / WA *</label>
+          <input id="phone_number" name="phone_number" type="text" placeholder="08xxxxxxxxxx" required />
+        </div>
+        <div class="bf-field">
+          <label for="borrower_email">Email</label>
+          <input id="borrower_email" name="borrower_email" type="email" placeholder="email@contoh.com" />
+        </div>
+        <div class="bf-field full">
+          <label for="organization">Organisasi / Lembaga *</label>
+          <input id="organization" name="organization" type="text" placeholder="Nama organisasi atau lembaga" required />
+        </div>
+        <div class="bf-field full">
+          <label for="purpose">Tujuan Peminjaman *</label>
+          <textarea id="purpose" name="purpose" rows="3" placeholder="Jelaskan tujuan dan agenda kegiatan" required></textarea>
+        </div>
+      </div>
+
+      <div class="bf-section">Jadwal Penggunaan</div>
+      <div class="bf-grid">
+        <div class="bf-field full">
+          <label for="booking_date">Tanggal Penggunaan *</label>
+          <input id="booking_date" name="booking_date" type="date" required />
+        </div>
+        <div class="bf-field">
+          <label for="start_time">Jam Mulai *</label>
+          <select id="start_time" name="start_time" required>
+            <option value="">-- Pilih jam mulai --</option>
+            {% for start, end in time_slots %}
+              <option value="{{ start }}">{{ start }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="bf-field">
+          <label for="end_time">Jam Selesai *</label>
+          <select id="end_time" name="end_time" required>
+            <option value="">-- Pilih jam selesai --</option>
+            {% for start, end in time_slots %}
+              <option value="{{ end }}">{{ end }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="bf-field full">
+          <label for="notes">Catatan Tambahan</label>
+          <textarea id="notes" name="notes" rows="2" placeholder="Opsional — catatan tambahan untuk panitia"></textarea>
+        </div>
+      </div>
+
+      <div class="bf-section">Dokumen Wajib</div>
+      <div class="bf-grid">
+        <div class="bf-field full">
+          <label for="pakta_integritas">Pakta Integritas + Tanda Tangan * <span style="font-weight:400;color:#94a3b8;">(PDF / JPG / PNG, maks 10 MB)</span></label>
+          <input id="pakta_integritas" name="pakta_integritas" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+          {% if pakta_template %}
+            <div class="bf-field-hint">Belum punya template? <a href="{{ url_for('main.download_pakta_template') }}">Download di sini</a>, isi &amp; tanda tangani, lalu unggah.</div>
+          {% endif %}
+        </div>
+        <div class="bf-field full">
+          <label for="surat_permohonan">Surat Permohonan (diketahui BEM) * <span style="font-weight:400;color:#94a3b8;">(PDF / JPG / PNG, maks 10 MB)</span></label>
+          <input id="surat_permohonan" name="surat_permohonan" type="file" accept=".pdf,.jpg,.jpeg,.png" required />
+        </div>
+      </div>
+
+      <button type="submit" class="bf-submit">Kirim Pengajuan Peminjaman →</button>
+    </form>
+  </div>
+
+</div>
 {% endblock %}
+

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard {{ role|upper }}{% endblock %}
+
+{% block content %}
+  <div class="dashboard-shell">
+    <header class="dashboard-topbar">
+      <div class="dashboard-brand">
+        <div class="dashboard-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="1"></circle>
+            <path d="M12 1v6m0 6v6"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="dashboard-title">SIKARAENG</div>
+          <div class="dashboard-subtitle">{{ full_name }} ({{ role|upper }})</div>
+        </div>
+      </div>
+      <nav class="dashboard-actions">
+        <a href="{{ url_for('main.index') }}" class="dashboard-action-link"><span class="action-icon"><span class="material-symbols-outlined">home</span></span> Publik</a>
+        <a href="{{ url_for('auth.logout') }}" class="dashboard-action-link"><span class="action-icon"><span class="material-symbols-outlined">meeting_room</span></span> Keluar</a>
+      </nav>
+    </header>
+
+    <section class="dashboard-content">
+      <section class="dashboard-card">
+        <header class="card-header">
+          <div class="card-title">
+            <span class="card-icon"><span class="material-symbols-outlined">content_paste</span></span>
+            <h2>Pengajuan Menunggu Persetujuan — {{ role|upper }}</h2>
+          </div>
+        </header>
+
+        <p style="padding:.3rem 1.2rem .5rem;font-size:.88rem;color:#718096;">
+          Status yang perlu Anda tindak: <strong>{{ my_status }}</strong>
+        </p>
+
+        <section class="table-wrapper">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Ruangan</th>
+                <th>Nama Peminjam</th>
+                <th>Organisasi</th>
+                <th>Tanggal Penggunaan</th>
+                <th>Waktu</th>
+                <th>Tujuan</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in bookings %}
+                <tr>
+                  <td>{{ booking.room.room_name if booking.room else "-" }}</td>
+                  <td>{{ booking.display_name }}</td>
+                  <td>{{ booking.organization or "-" }}</td>
+                  <td>{{ booking.booking_date.strftime("%d %b %Y") if booking.booking_date else "-" }}</td>
+                  <td>{% if booking.start_time and booking.end_time %}{{ booking.start_time.strftime("%H:%M") }} – {{ booking.end_time.strftime("%H:%M") }}{% else %}-{% endif %}</td>
+                  <td>{{ booking.purpose or "-" }}</td>
+                  <td class="cell-actions">
+                    <a href="{{ url_for('approval.approval_detail', booking_id=booking.id) }}" class="btn-ghost" title="Lihat Detail"><span class="material-symbols-outlined">visibility</span></a>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="7" class="cell-empty">Tidak ada pengajuan yang menunggu persetujuan Anda.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+      </section>
+
+      <!-- ============ RIWAYAT ============ -->
+      <section class="dashboard-card" style="margin-top:1.5rem;">
+        <header class="card-header">
+          <div class="card-title">
+            <span class="card-icon"><span class="material-symbols-outlined">folder_copy</span></span>
+            <h2>Riwayat Peminjaman</h2>
+          </div>
+        </header>
+        <p style="padding:.3rem 1.2rem .5rem;font-size:.88rem;color:#718096;">
+          Semua pengajuan yang sudah Anda setujui atau tolak.
+        </p>
+        <section class="table-wrapper">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Ruangan</th>
+                <th>Nama Peminjam</th>
+                <th>Organisasi</th>
+                <th>Tanggal Penggunaan</th>
+                <th>Status Saat Ini</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in history %}
+                <tr>
+                  <td>{{ booking.room.room_name if booking.room else "-" }}</td>
+                  <td>{{ booking.display_name }}</td>
+                  <td>{{ booking.organization or "-" }}</td>
+                  <td>{{ booking.booking_date.strftime("%d %b %Y") if booking.booking_date else "-" }}</td>
+                  <td>
+                    {% set s = booking.status or "-" %}
+                    {% if s == "Disetujui" %}
+                      <span class="badge" style="background:#c6f6d5;color:#22543d;"><span class="material-symbols-outlined">check_circle</span> {{ s }}</span>
+                    {% elif s == "Ditolak" %}
+                      <span class="badge" style="background:#fed7d7;color:#742a2a;"><span class="material-symbols-outlined">cancel</span> {{ s }}</span>
+                    {% else %}
+                      <span class="badge" style="background:#fefcbf;color:#744210;"><span class="material-symbols-outlined">hourglass_empty</span> {{ s }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="cell-actions">
+                    <a href="{{ url_for('approval.approval_detail', booking_id=booking.id) }}" class="btn-ghost" title="Lihat Detail"><span class="material-symbols-outlined">visibility</span></a>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="6" class="cell-empty">Belum ada riwayat peminjaman.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+      </section>
+    </section>
+  </div>
+{% endblock %}

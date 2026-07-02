@@ -1,18 +1,56 @@
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+import datetime as dt
+import os
+
+import io
+
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+    session,
+    url_for,
+)
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
+from werkzeug.utils import secure_filename
 
 from app.extensions import db
+from app.models.holiday import Holiday
+from app.models.pakta_template import PaktaTemplate
 from app.models.reference import Building, Course
-from app.models.class_schedule import ClassSchedule
+from app.models.class_schedule import ClassSchedule, class_schedule_lecturers
 from app.models.lecturer import Lecturer
 from app.models.room import Room
 from app.models.room_booking import RoomBooking
-from app.models.user import User
+from app.models.user import User, ROLES, APPROVAL_ROLES
 from app.models.semester import Semester
 from app.routes.auth import login_required, role_required
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/dashboard")
+
+
+def _allowed_file(filename: str) -> bool:
+    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"pdf", "jpg", "jpeg", "png"})
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
+
+
+def _save_upload(file, subfolder: str) -> str | None:
+    if not file or not file.filename:
+        return None
+    if not _allowed_file(file.filename):
+        return None
+    upload_root = current_app.config["UPLOAD_FOLDER"]
+    dest_dir = os.path.join(upload_root, subfolder)
+    os.makedirs(dest_dir, exist_ok=True)
+    filename = secure_filename(file.filename)
+    unique_name = f"{int(dt.datetime.utcnow().timestamp())}_{filename}"
+    file.save(os.path.join(dest_dir, unique_name))
+    return os.path.join(subfolder, unique_name)
 
 
 def _get_active_semester():
@@ -44,6 +82,7 @@ def admin_home():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         confirm_password = request.form.get("confirm_password", "")
+        role = request.form.get("role", "staff").strip()
 
         if not full_name or not email or not password:
             flash("Nama, email, dan password wajib diisi.", "error")
@@ -53,28 +92,31 @@ def admin_home():
             flash("Konfirmasi password tidak cocok.", "error")
             return redirect(url_for("dashboard.admin_home"))
 
+        if role not in ROLES or role == "admin":
+            role = "staff"
+
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash("Email sudah digunakan.", "error")
             return redirect(url_for("dashboard.admin_home"))
 
-        staff_user = User(full_name=full_name, email=email, role="staff")
-        staff_user.set_password(password)
-        db.session.add(staff_user)
+        new_user = User(full_name=full_name, email=email, role=role)
+        new_user.set_password(password)
+        db.session.add(new_user)
         db.session.commit()
-        flash("Akun staff berhasil dibuat.", "info")
+        flash(f"Akun {role} berhasil dibuat.", "info")
         return redirect(url_for("dashboard.admin_home"))
 
-    staff_users = User.query.filter_by(role="staff").order_by(User.id.desc()).all()
+    all_users = User.query.filter(User.role != "admin").order_by(User.id.desc()).all()
     total_users = User.query.count()
     admin_count = User.query.filter_by(role="admin").count()
     return render_template(
         "dashboard/admin.html",
         full_name=session.get("full_name"),
-        staff_users=staff_users,
+        all_users=all_users,
         total_users=total_users,
-        staff_count=len(staff_users),
         admin_count=admin_count,
+        roles=[r for r in ROLES if r != "admin"],
     )
 
 
@@ -93,9 +135,13 @@ def staff_home():
         ).distinct().count()
         
         # Lecturers yang mengajar di semester ini
-        total_lecturers = db.session.query(ClassSchedule.lecturer_id).filter(
-            ClassSchedule.semester_id == active_semester.id
-        ).distinct().count()
+        total_lecturers = (
+            db.session.query(class_schedule_lecturers.c.lecturer_id)
+            .join(ClassSchedule, ClassSchedule.id == class_schedule_lecturers.c.schedule_id)
+            .filter(ClassSchedule.semester_id == active_semester.id)
+            .distinct()
+            .count()
+        )
         
         # Rooms yang digunakan di semester ini
         total_rooms = db.session.query(ClassSchedule.room_id).filter(
@@ -392,14 +438,20 @@ def staff_bookings():
             flash("Peminjaman berhasil dihapus.", "info")
             return redirect(url_for("dashboard.staff_bookings"))
 
-        if action == "approve" and booking:
-            booking.status = "Disetujui"
+        if action == "forward" and booking:
+            # Staff checks done → forward to Kasubag
+            booking.is_fib_student = request.form.get("is_fib_student") == "1"
+            booking.is_bem_verified = request.form.get("is_bem_verified") == "1"
+            booking.staff_note = request.form.get("staff_note", "").strip() or None
+            booking.status = "Menunggu Kasubag"
             db.session.commit()
-            flash("Peminjaman disetujui.", "info")
+            flash("Pengajuan diteruskan ke Kasubag.", "info")
             return redirect(url_for("dashboard.staff_bookings"))
 
         if action == "reject" and booking:
             booking.status = "Ditolak"
+            booking.rejection_note = request.form.get("rejection_note", "").strip() or None
+            booking.rejected_by = "staff"
             db.session.commit()
             flash("Peminjaman ditolak.", "info")
             return redirect(url_for("dashboard.staff_bookings"))
@@ -407,11 +459,11 @@ def staff_bookings():
     booking_rows = (
         db.session.query(RoomBooking, Room)
         .join(Room, RoomBooking.room_id == Room.id)
-        .order_by(RoomBooking.booking_date.desc(), RoomBooking.start_time.desc(), RoomBooking.id.desc())
-        .limit(100)
+        .order_by(RoomBooking.booking_date.asc(), RoomBooking.id.desc())
+        .limit(200)
         .all()
     )
-    
+
     active_semester = _get_active_semester()
     return render_template(
         "dashboard/staff_bookings.html",
@@ -419,6 +471,38 @@ def staff_bookings():
         booking_rows=booking_rows,
         active_semester=active_semester,
     )
+
+
+@dashboard_bp.get("/staff/bookings/<int:booking_id>")
+@login_required
+@role_required("staff", "admin")
+def staff_booking_detail(booking_id: int):
+    booking = RoomBooking.query.get_or_404(booking_id)
+    return render_template(
+        "dashboard/staff_booking_detail.html",
+        full_name=session.get("full_name"),
+        booking=booking,
+        active_semester=_get_active_semester(),
+    )
+
+
+@dashboard_bp.get("/staff/bookings/file/<int:booking_id>/<field>")
+@login_required
+@role_required("staff", "admin")
+def staff_serve_file(booking_id: int, field: str):
+    if field not in ("pakta_integritas_path", "surat_permohonan_path"):
+        from flask import abort
+        abort(404)
+    booking = RoomBooking.query.get_or_404(booking_id)
+    file_path = getattr(booking, field, None)
+    if not file_path:
+        from flask import abort
+        abort(404)
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    dir_path = os.path.dirname(os.path.join(upload_folder, file_path))
+    filename = os.path.basename(file_path)
+    return send_from_directory(dir_path, filename, as_attachment=False)
+
 
 
 @dashboard_bp.route("/staff/schedules", methods=["GET", "POST"])
@@ -429,7 +513,8 @@ def staff_schedules():
         action = request.form.get("action", "add")
         schedule_id = request.form.get("schedule_id", "").strip()
         course_id = request.form.get("course_id", "").strip()
-        lecturer_id = request.form.get("lecturer_id", "").strip()
+        lecturer_ids = request.form.getlist("lecturer_ids")
+        class_name = request.form.get("class_name", "").strip()
         room_id = request.form.get("room_id", "").strip()
         day_name = request.form.get("day_name", "").strip()
         start_time = request.form.get("start_time", "").strip()
@@ -438,14 +523,20 @@ def staff_schedules():
 
         if action == "delete":
             if schedule_id:
-                ClassSchedule.query.filter_by(id=int(schedule_id)).delete()
+                sched = ClassSchedule.query.get(int(schedule_id))
+                if sched:
+                    sched.lecturers = []
+                    db.session.flush()
+                    db.session.delete(sched)
                 db.session.commit()
                 flash("Jadwal berhasil dihapus.", "info")
             return redirect(url_for("dashboard.staff_schedules"))
 
-        if not (course_id and lecturer_id and room_id and day_name and start_time and end_time and semester_id):
-            flash("Semua field jadwal wajib diisi.", "error")
+        if not (course_id and lecturer_ids and room_id and day_name and start_time and end_time and semester_id):
+            flash("Semua field jadwal wajib diisi (minimal 1 pengajar).", "error")
             return redirect(url_for("dashboard.staff_schedules"))
+
+        lecturers_list = Lecturer.query.filter(Lecturer.id.in_([int(lid) for lid in lecturer_ids])).all()
 
         if action == "update":
             schedule = ClassSchedule.query.get(int(schedule_id)) if schedule_id else None
@@ -453,36 +544,38 @@ def staff_schedules():
                 flash("Jadwal tidak ditemukan.", "error")
                 return redirect(url_for("dashboard.staff_schedules"))
             schedule.course_id = int(course_id)
-            schedule.lecturer_id = int(lecturer_id)
+            schedule.class_name = class_name or None
             schedule.room_id = int(room_id)
             schedule.day_name = day_name
             schedule.start_time = start_time
             schedule.end_time = end_time
             schedule.semester_id = int(semester_id)
+            schedule.lecturers = lecturers_list
             db.session.commit()
             flash("Jadwal berhasil diperbarui.", "info")
             return redirect(url_for("dashboard.staff_schedules"))
 
         schedule = ClassSchedule(
             course_id=int(course_id),
-            lecturer_id=int(lecturer_id),
+            class_name=class_name or None,
             room_id=int(room_id),
             day_name=day_name,
             start_time=start_time,
             end_time=end_time,
             semester_id=int(semester_id),
         )
+        schedule.lecturers = lecturers_list
         db.session.add(schedule)
         db.session.commit()
         flash("Jadwal berhasil ditambahkan.", "info")
         return redirect(url_for("dashboard.staff_schedules"))
 
-    q = request.args.get("q", "").strip()
+    q   = request.args.get("q", "").strip()
+    day = request.args.get("day", "").strip()
     active_semester = _get_active_semester()
     query = (
-        db.session.query(ClassSchedule, Course, Lecturer, Room)
+        db.session.query(ClassSchedule, Course, Room)
         .join(Course, ClassSchedule.course_id == Course.id)
-        .join(Lecturer, ClassSchedule.lecturer_id == Lecturer.id)
         .join(Room, ClassSchedule.room_id == Room.id)
     )
     if active_semester:
@@ -490,18 +583,28 @@ def staff_schedules():
     else:
         # Jika tidak ada semester yang dipilih, tidak tampilkan jadwal apapun
         query = query.filter(False)
-    
+
+    if day:
+        query = query.filter(ClassSchedule.day_name == day)
+
     if q:
         query = query.filter(
             or_(
                 Course.course_name.ilike(f"%{q}%"),
                 Course.course_code.ilike(f"%{q}%"),
-                Lecturer.lecturer_name.ilike(f"%{q}%"),
+                ClassSchedule.class_name.ilike(f"%{q}%"),
                 Room.room_name.ilike(f"%{q}%"),
                 ClassSchedule.day_name.ilike(f"%{q}%"),
+                ClassSchedule.lecturers.any(Lecturer.lecturer_name.ilike(f"%{q}%")),
             )
         )
-    schedules = query.order_by(ClassSchedule.day_name.asc(), ClassSchedule.start_time.asc()).limit(50).all()
+    page       = request.args.get("page", 1, type=int)
+    per_page   = 25
+    pagination = (
+        query
+        .order_by(ClassSchedule.day_name.asc(), ClassSchedule.start_time.asc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
 
     courses = Course.query.order_by(Course.course_name.asc()).all()
     lecturers = Lecturer.query.order_by(Lecturer.lecturer_name.asc()).all()
@@ -511,12 +614,14 @@ def staff_schedules():
     return render_template(
         "dashboard/staff_schedules.html",
         full_name=session.get("full_name"),
-        schedules=schedules,
+        schedules=pagination.items,
+        pagination=pagination,
         courses=courses,
         lecturers=lecturers,
         rooms=rooms,
         semesters=semesters,
         q=q,
+        day=day,
         active_semester=active_semester,
     )
 
@@ -600,3 +705,398 @@ def staff_select_semester():
     else:
         session.pop("active_semester_id", None)
     return redirect(request.referrer or url_for("dashboard.staff_home"))
+
+
+# ---------------------------------------------------------------------------
+# Holiday management
+# ---------------------------------------------------------------------------
+
+@dashboard_bp.route("/staff/holidays", methods=["GET", "POST"])
+@login_required
+@role_required("staff", "admin")
+def staff_holidays():
+    if request.method == "POST":
+        action = request.form.get("action", "add")
+        holiday_id = request.form.get("holiday_id", "").strip()
+
+        if action == "delete" and holiday_id:
+            Holiday.query.filter_by(id=int(holiday_id)).delete()
+            db.session.commit()
+            flash("Hari libur dihapus.", "info")
+            return redirect(url_for("dashboard.staff_holidays"))
+
+        date_str = request.form.get("date", "").strip()
+        description = request.form.get("description", "").strip()
+        if not date_str or not description:
+            flash("Tanggal dan keterangan wajib diisi.", "error")
+            return redirect(url_for("dashboard.staff_holidays"))
+
+        try:
+            import datetime as _dt
+            parsed = _dt.date.fromisoformat(date_str)
+        except ValueError:
+            flash("Format tanggal tidak valid.", "error")
+            return redirect(url_for("dashboard.staff_holidays"))
+
+        existing = Holiday.query.filter_by(date=parsed).first()
+        if existing:
+            flash("Tanggal tersebut sudah terdaftar sebagai hari libur.", "error")
+            return redirect(url_for("dashboard.staff_holidays"))
+
+        db.session.add(Holiday(date=parsed, description=description))
+        db.session.commit()
+        flash("Hari libur berhasil ditambahkan.", "info")
+        return redirect(url_for("dashboard.staff_holidays"))
+
+    holidays = Holiday.query.order_by(Holiday.date.asc()).all()
+    return render_template(
+        "dashboard/staff_holidays.html",
+        full_name=session.get("full_name"),
+        holidays=holidays,
+        active_semester=_get_active_semester(),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Pakta integritas template upload / download
+# ---------------------------------------------------------------------------
+
+@dashboard_bp.route("/staff/pakta-template", methods=["GET", "POST"])
+@login_required
+@role_required("staff", "admin")
+def staff_pakta_template():
+    if request.method == "POST":
+        file = request.files.get("template_file")
+        if not file or not file.filename:
+            flash("File wajib dipilih.", "error")
+            return redirect(url_for("dashboard.staff_pakta_template"))
+        allowed_ext = {"pdf", "docx", "doc"}
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if ext not in allowed_ext:
+            flash("Format file tidak didukung (PDF, DOCX, DOC).", "error")
+            return redirect(url_for("dashboard.staff_pakta_template"))
+
+        upload_root = current_app.config["UPLOAD_FOLDER"]
+        dest_dir = os.path.join(upload_root, "templates")
+        os.makedirs(dest_dir, exist_ok=True)
+        original_name = secure_filename(file.filename)
+        unique_name = f"{int(dt.datetime.utcnow().timestamp())}_{original_name}"
+        file.save(os.path.join(dest_dir, unique_name))
+        rel_path = os.path.join("templates", unique_name)
+
+        record = PaktaTemplate(
+            file_path=rel_path,
+            original_filename=original_name,
+            uploaded_by=session.get("user_id"),
+        )
+        db.session.add(record)
+        db.session.commit()
+        flash("Template pakta integritas berhasil diunggah.", "info")
+        return redirect(url_for("dashboard.staff_pakta_template"))
+
+    templates = PaktaTemplate.query.order_by(PaktaTemplate.id.desc()).limit(10).all()
+    return render_template(
+        "dashboard/staff_pakta_template.html",
+        full_name=session.get("full_name"),
+        templates=templates,
+        active_semester=_get_active_semester(),
+    )
+
+
+@dashboard_bp.get("/staff/pakta-template/download/<int:template_id>")
+@login_required
+@role_required("staff", "admin")
+def staff_download_pakta_template(template_id: int):
+    tmpl = PaktaTemplate.query.get_or_404(template_id)
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    dir_path = os.path.dirname(os.path.join(upload_folder, tmpl.file_path))
+    filename = os.path.basename(tmpl.file_path)
+    return send_from_directory(
+        dir_path, filename,
+        as_attachment=True,
+        download_name=tmpl.original_filename or filename,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Excel upload for auto-fill schedules
+# ---------------------------------------------------------------------------
+
+@dashboard_bp.route("/staff/schedules/excel-template")
+@login_required
+@role_required("staff", "admin")
+def staff_schedule_excel_template():
+    """Generate and download an Excel template with dropdown validation from existing data."""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    # Fetch existing data for dropdowns
+    courses   = Course.query.order_by(Course.course_name).all()
+    lecturers = Lecturer.query.order_by(Lecturer.lecturer_name).all()
+    rooms     = Room.query.order_by(Room.room_name).all()
+    buildings = Building.query.order_by(Building.building_name).all()
+
+    course_names   = [c.course_name   for c in courses   if c.course_name]
+    lecturer_names = [l.lecturer_name for l in lecturers if l.lecturer_name]
+    room_names     = [r.room_name     for r in rooms     if r.room_name]
+    building_names = [b.building_name for b in buildings if b.building_name]
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Template Jadwal"
+
+    # ── Hidden Referensi sheet for dropdown lists ──
+    ref_ws = wb.create_sheet("Referensi")
+    ref_ws.sheet_state = "hidden"
+    for i, name in enumerate(course_names,   start=1): ref_ws.cell(row=i, column=1, value=name)
+    for i, name in enumerate(lecturer_names, start=1): ref_ws.cell(row=i, column=2, value=name)
+    for i, name in enumerate(room_names,     start=1): ref_ws.cell(row=i, column=3, value=name)
+    for i, name in enumerate(building_names, start=1): ref_ws.cell(row=i, column=4, value=name)
+
+    # ── Header row ──
+    # New 10-column layout:
+    # A: Matakuliah | B: Kelas | C: Pengajar 1 | D: Pengajar 2 | E: Pengajar 3
+    # F: Ruangan | G: Hari | H: Jam Mulai | I: Jam Selesai | J: Gedung
+    headers = [
+        "Matakuliah", "Kelas",
+        "Pengajar 1", "Pengajar 2 (opsional)", "Pengajar 3 (opsional)",
+        "Ruangan", "Hari", "Jam Mulai", "Jam Selesai", "Gedung (opsional)",
+    ]
+    header_fill = PatternFill("solid", fgColor="1E3A8A")
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    border = Border(
+        left=Side(style="thin"), right=Side(style="thin"),
+        top=Side(style="thin"),  bottom=Side(style="thin"),
+    )
+    for col, h in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    # ── Data Validation dropdowns (rows 2–500) ──
+    MAX_ROW = 500
+
+    if course_names:
+        dv = DataValidation(type="list", formula1=f"Referensi!$A$1:$A${len(course_names)}", allow_blank=True, showDropDown=False)
+        dv.sqref = f"A2:A{MAX_ROW}"
+        ws.add_data_validation(dv)
+
+    if lecturer_names:
+        n = len(lecturer_names)
+        for col_letter in ("C", "D", "E"):
+            dv = DataValidation(type="list", formula1=f"Referensi!$B$1:$B${n}", allow_blank=True, showDropDown=False)
+            dv.sqref = f"{col_letter}2:{col_letter}{MAX_ROW}"
+            ws.add_data_validation(dv)
+
+    if room_names:
+        dv = DataValidation(type="list", formula1=f"Referensi!$C$1:$C${len(room_names)}", allow_blank=True, showDropDown=False)
+        dv.sqref = f"F2:F{MAX_ROW}"
+        ws.add_data_validation(dv)
+
+    # Hari dropdown (hardcoded list) — column G
+    dv_day = DataValidation(
+        type="list",
+        formula1='"Senin,Selasa,Rabu,Kamis,Jumat,Sabtu,Minggu"',
+        allow_blank=True, showDropDown=False,
+    )
+    dv_day.sqref = f"G2:G{MAX_ROW}"
+    ws.add_data_validation(dv_day)
+
+    if building_names:
+        dv = DataValidation(type="list", formula1=f"Referensi!$D$1:$D${len(building_names)}", allow_blank=True, showDropDown=False)
+        dv.sqref = f"J2:J{MAX_ROW}"
+        ws.add_data_validation(dv)
+
+    # ── Note row (row 2) ──
+    note_cell = ws.cell(
+        row=2, column=1,
+        value="Isi mulai baris 3. Kolom A/C/D/E/F/G/J memiliki dropdown. "
+              "Kelas diisi A/B/C dst. Pengajar 2 & 3 opsional. Jam format HH:MM.",
+    )
+    note_cell.font = Font(italic=True, color="718096", size=9)
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=10)
+    note_cell.alignment = Alignment(horizontal="left", vertical="center")
+
+    # ── Column widths ──
+    for i, w in enumerate([30, 7, 26, 26, 26, 20, 9, 10, 10, 20], start=1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.row_dimensions[1].height = 22
+    ws.row_dimensions[2].height = 18
+    ws.freeze_panes = "A3"
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name="template_jadwal.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+@dashboard_bp.route("/staff/schedules/excel-upload", methods=["GET", "POST"])
+@login_required
+@role_required("staff", "admin")
+def staff_schedule_excel_upload():
+    if request.method == "POST":
+        file = request.files.get("excel_file")
+        semester_id = request.form.get("semester_id", "").strip()
+        if not file or not file.filename:
+            flash("File Excel wajib dipilih.", "error")
+            return redirect(url_for("dashboard.staff_schedule_excel_upload"))
+        if not semester_id:
+            flash("Semester wajib dipilih.", "error")
+            return redirect(url_for("dashboard.staff_schedule_excel_upload"))
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if ext not in ("xlsx", "xls"):
+            flash("Format file tidak didukung, gunakan .xlsx atau .xls.", "error")
+            return redirect(url_for("dashboard.staff_schedule_excel_upload"))
+
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(file, read_only=True, data_only=True)
+            ws = wb.active
+            rows = list(ws.iter_rows(min_row=3, values_only=True))
+        except Exception as exc:
+            flash(f"Gagal membaca file Excel: {exc}", "error")
+            return redirect(url_for("dashboard.staff_schedule_excel_upload"))
+
+        # Expected columns (1-indexed):
+        # A: course_name/code, B: lecturer_name/nidn, C: room_name/code,
+        # D: day_name, E: start_time (HH:MM), F: end_time (HH:MM)
+        added = 0
+        errors = []
+        sem_id = int(semester_id)
+
+        for i, row in enumerate(rows, start=2):
+            if not any(row):
+                continue
+            try:
+                # Column layout (10 cols):
+                # A=Matakuliah, B=Kelas, C=Pengajar1, D=Pengajar2, E=Pengajar3,
+                # F=Ruangan, G=Hari, H=JamMulai, I=JamSelesai, J=Gedung
+                course_val    = str(row[0] or "").strip()
+                class_name    = str(row[1] or "").strip()
+                lecturer_val1 = str(row[2] or "").strip() if len(row) > 2 else ""
+                lecturer_val2 = str(row[3] or "").strip() if len(row) > 3 else ""
+                lecturer_val3 = str(row[4] or "").strip() if len(row) > 4 else ""
+                room_val      = str(row[5] or "").strip() if len(row) > 5 else ""
+                day_name      = str(row[6] or "").strip() if len(row) > 6 else ""
+                start_str     = str(row[7] or "").strip() if len(row) > 7 else ""
+                end_str       = str(row[8] or "").strip() if len(row) > 8 else ""
+                building_val  = str(row[9] or "").strip() if len(row) > 9 else ""
+
+                if not all([course_val, lecturer_val1, room_val, day_name, start_str, end_str]):
+                    errors.append(f"Baris {i}: kolom wajib tidak lengkap (Matakuliah/Pengajar1/Ruangan/Hari/Jam), dilewati.")
+                    continue
+
+                # Resolve course
+                course = (Course.query.filter(
+                    or_(Course.course_name.ilike(course_val), Course.course_code.ilike(course_val))
+                ).first())
+                if not course:
+                    course = Course(course_name=course_val)
+                    db.session.add(course)
+                    db.session.flush()
+
+                # Resolve lecturers (Pengajar 1 wajib, 2 & 3 opsional)
+                resolved_lecturers = []
+                for lval in [lecturer_val1, lecturer_val2, lecturer_val3]:
+                    if not lval:
+                        continue
+                    lec = Lecturer.query.filter(
+                        or_(Lecturer.lecturer_name.ilike(lval), Lecturer.nidn.ilike(lval))
+                    ).first()
+                    if not lec:
+                        lec = Lecturer(lecturer_name=lval)
+                        db.session.add(lec)
+                        db.session.flush()
+                    resolved_lecturers.append(lec)
+
+                # Resolve building (column J, opsional)
+                building_obj = None
+                if building_val:
+                    building_obj = Building.query.filter(
+                        Building.building_name.ilike(building_val)
+                    ).first()
+                    if not building_obj:
+                        building_obj = Building(building_name=building_val)
+                        db.session.add(building_obj)
+                        db.session.flush()
+
+                # Resolve room
+                room = (Room.query.filter(
+                    or_(Room.room_name.ilike(room_val), Room.room_code.ilike(room_val))
+                ).first())
+                if not room:
+                    room = Room(
+                        room_name=room_val,
+                        room_type="Ruang Kelas",
+                        building_id=building_obj.id if building_obj else None,
+                    )
+                    db.session.add(room)
+                    db.session.flush()
+                elif building_obj and not room.building_id:
+                    room.building_id = building_obj.id
+
+                # Parse time strings to datetime.time
+                try:
+                    start_time = dt.datetime.strptime(start_str, "%H:%M").time()
+                    end_time   = dt.datetime.strptime(end_str,   "%H:%M").time()
+                except ValueError:
+                    errors.append(f"Baris {i}: format jam salah (gunakan HH:MM), dilewati.")
+                    continue
+
+                sched = ClassSchedule(
+                    course_id=course.id,
+                    room_id=room.id,
+                    day_name=day_name,
+                    start_time=start_time,
+                    end_time=end_time,
+                    semester_id=sem_id,
+                    class_name=class_name,
+                )
+                sched.lecturers = resolved_lecturers
+                db.session.add(sched)
+                added += 1
+            except Exception as exc:
+                errors.append(f"Baris {i}: {exc}")
+
+        db.session.commit()
+        msg = f"{added} jadwal berhasil diimpor."
+        if errors:
+            msg += f" {len(errors)} baris gagal: " + "; ".join(errors[:5])
+        flash(msg, "info" if added else "error")
+        return redirect(url_for("dashboard.staff_schedules"))
+
+    semesters = Semester.query.order_by(Semester.id.desc()).all()
+    return render_template(
+        "dashboard/staff_schedule_excel.html",
+        full_name=session.get("full_name"),
+        semesters=semesters,
+        active_semester=_get_active_semester(),
+        active_menu="schedule_excel",
+    )
+
+
+# ---------------------------------------------------------------------------
+# QR code pages (staff generates QR for rooms)
+# ---------------------------------------------------------------------------
+
+@dashboard_bp.get("/staff/qr-codes")
+@login_required
+@role_required("staff", "admin")
+def staff_qr_codes():
+    rooms = Room.query.order_by(Room.room_name.asc()).all()
+    return render_template(
+        "dashboard/staff_qr_codes.html",
+        full_name=session.get("full_name"),
+        rooms=rooms,
+        active_semester=_get_active_semester(),
+    )
+

@@ -1,0 +1,36 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}QR Code Ruangan{% endblock %}
+
+{% set active_menu = "qrcodes" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon"><span class="material-symbols-outlined">smartphone</span></span>
+        <h2>QR Code Ruangan</h2>
+      </div>
+    </header>
+
+    <p style="padding:.5rem 1.2rem;font-size:.88rem;color:#718096;">
+      Scan QR code dengan kamera untuk langsung ke form peminjaman event ruangan tersebut. Cetak dan tempel di pintu ruangan.
+    </p>
+
+    <section class="room-grid" style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+      {% for room in rooms %}
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:1rem;text-align:center;">
+          <h4 style="margin-bottom:.5rem;font-size:.95rem;">{{ room.room_name }}</h4>
+          <img src="{{ url_for('main.room_qr', room_id=room.id) }}" alt="QR {{ room.room_name }}"
+               style="width:140px;height:140px;margin-bottom:.6rem;" />
+          <div style="display:flex;flex-direction:column;gap:.4rem;">
+            <a href="{{ url_for('main.room_qr_page', room_id=room.id) }}" target="_blank" class="btn-ghost" style="font-size:.8rem;"><span class="material-symbols-outlined">print</span> Cetak QR</a>
+            <a href="{{ url_for('main.room_qr', room_id=room.id) }}" download="qr_{{ room.room_name }}.png" class="btn-ghost" style="font-size:.8rem;"><span class="material-symbols-outlined">download</span> Download</a>
+          </div>
+        </div>
+      {% else %}
+        <div class="panel" style="grid-column:1/-1;">Belum ada ruangan.</div>
+      {% endfor %}
+    </section>
+  </section>
+{% endblock %}

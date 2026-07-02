@@ -27,12 +27,11 @@
         </thead>
         <tbody>
           {% for row in schedule_rows %}
-            {% set lecturer = row[1] %}
-            {% set room = row[2] %}
             {% set sched = row[0] %}
+            {% set room = row[1] %}
             <tr>
               <td>{{ sched.start_time }} - {{ sched.end_time }}</td>
-              <td>{{ lecturer.lecturer_name }}</td>
+              <td>{{ sched.lecturers | map(attribute='lecturer_name') | join(', ') or '-' }}</td>
               <td>{{ room.room_name }}</td>
             </tr>
           {% else %}

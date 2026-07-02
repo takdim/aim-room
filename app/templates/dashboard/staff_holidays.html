@@ -1,0 +1,65 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Kelola Hari Libur{% endblock %}
+
+{% set active_menu = "holidays" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon"><span class="material-symbols-outlined">calendar_month</span></span>
+        <h2>Kelola Hari Libur</h2>
+      </div>
+    </header>
+
+    <div style="padding:1rem;max-width:500px;">
+      <p style="font-size:.88rem;color:#718096;margin-bottom:1rem;">
+        Hari Minggu otomatis dianggap hari libur. Tambahkan hari libur nasional atau libur khusus di bawah ini.
+      </p>
+      <form method="post" style="display:flex;flex-direction:column;gap:.7rem;">
+        <div class="field">
+          <label for="date">Tanggal *</label>
+          <input id="date" name="date" type="date" required />
+        </div>
+        <div class="field">
+          <label for="description">Keterangan *</label>
+          <input id="description" name="description" type="text" placeholder="cth. Hari Raya Idul Fitri" required />
+        </div>
+        <button type="submit" name="action" value="add" class="primary" style="align-self:flex-start;">Tambah Hari Libur</button>
+      </form>
+    </div>
+
+    <section class="table-wrapper" style="margin-top:1.5rem;">
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Hari</th>
+            <th>Keterangan</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set day_names = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"] %}
+          {% for holiday in holidays %}
+            <tr>
+              <td>{{ holiday.date.strftime("%d %B %Y") }}</td>
+              <td>{{ day_names[holiday.date.weekday()] }}</td>
+              <td>{{ holiday.description }}</td>
+              <td>
+                <form method="post" class="inline-form" onsubmit="return confirm('Hapus hari libur ini?')">
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="holiday_id" value="{{ holiday.id }}" />
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="cell-empty">Belum ada hari libur terdaftar.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+{% endblock %}

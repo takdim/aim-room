@@ -22,8 +22,7 @@ def upgrade():
         batch_op.add_column(sa.Column('schedule_date', sa.Date(), nullable=True))
         batch_op.add_column(sa.Column('start_time', sa.Time(), nullable=True))
         batch_op.add_column(sa.Column('end_time', sa.Time(), nullable=True))
-        batch_op.drop_constraint(batch_op.f('class_schedules_ibfk_2'), type_='foreignkey')
-        batch_op.drop_constraint(batch_op.f('class_schedules_ibfk_5'), type_='foreignkey')
+        # FK drops omitted – handled by batch recreate in SQLite
         batch_op.drop_column('time_slot_id')
         batch_op.drop_column('day_id')
 

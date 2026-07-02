@@ -8,7 +8,7 @@
   <section class="dashboard-card">
     <header class="card-header">
       <div class="card-title">
-        <span class="card-icon">📋</span>
+        <span class="card-icon"><span class="material-symbols-outlined">content_paste</span></span>
         <h2>Kelola Peminjaman</h2>
       </div>
     </header>
@@ -18,11 +18,11 @@
         <thead>
           <tr>
             <th>Ruangan</th>
-            <th>Peminjam</th>
+            <th>Nama Peminjam</th>
             <th>Organisasi</th>
-            <th>Tanggal</th>
+            <th>Tanggal Penggunaan</th>
             <th>Waktu</th>
-            <th>Tujuan</th>
+            <th>Jenis</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
@@ -31,36 +31,47 @@
           {% for booking, room in booking_rows %}
             <tr>
               <td>{{ room.room_name }}</td>
-              <td>{{ booking.borrower_name or "-" }}</td>
+              <td>{{ booking.display_name }}</td>
               <td>{{ booking.organization or "-" }}</td>
-              <td>{{ booking.booking_date or "-" }}</td>
+              <td>{{ booking.booking_date.strftime("%d %b %Y") if booking.booking_date else "-" }}</td>
               <td>
                 {% if booking.start_time and booking.end_time %}
-                  {{ booking.start_time.strftime("%H:%M") }} - {{ booking.end_time.strftime("%H:%M") }}
+                  {{ booking.start_time.strftime("%H:%M") }} – {{ booking.end_time.strftime("%H:%M") }}
                 {% else %}
                   -
                 {% endif %}
               </td>
-              <td>{{ booking.purpose or "-" }}</td>
               <td>
-                {% set status_value = booking.status or "Menunggu" %}
-                <span class="badge status-{{ status_value|lower }}">{{ status_value }}</span>
+                {% if booking.booking_type == "event" %}
+                  <span class="badge" style="background:#f0fff4;color:#276749;border:1px solid #9ae6b4;">Event</span>
+                {% else %}
+                  Biasa
+                {% endif %}
+              </td>
+              <td>
+                {% set s = booking.status or "Menunggu Staff" %}
+                <span class="badge status-{{ s|lower|replace(' ', '-') }}">{{ s }}</span>
               </td>
               <td class="cell-actions">
-                <form method="post" class="inline-form">
-                  <input type="hidden" name="action" value="approve" />
-                  <input type="hidden" name="booking_id" value="{{ booking.id }}" />
-                  <button type="submit" class="btn-ghost" title="Setujui">✓</button>
-                </form>
-                <form method="post" class="inline-form">
-                  <input type="hidden" name="action" value="reject" />
-                  <input type="hidden" name="booking_id" value="{{ booking.id }}" />
-                  <button type="submit" class="btn-ghost" title="Tolak">✕</button>
-                </form>
-                <form method="post" class="inline-form" onsubmit="return confirm('Hapus peminjaman ini?')">
+                <a href="{{ url_for('dashboard.staff_booking_detail', booking_id=booking.id) }}" class="btn-ghost" title="Lihat Detail & File"><span class="material-symbols-outlined">folder_open</span></a>
+                {% if booking.status == "Menunggu Staff" %}
+                  <form method="post" class="inline-form" style="display:inline;">
+                    <input type="hidden" name="action" value="forward" />
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}" />
+                    <input type="hidden" name="is_fib_student" value="1" />
+                    <input type="hidden" name="is_bem_verified" value="1" />
+                    <button type="submit" class="btn-ghost" title="Teruskan ke Kasubag (cek di halaman detail)"><span class="material-symbols-outlined">check</span></button>
+                  </form>
+                  <form method="post" class="inline-form" style="display:inline;">
+                    <input type="hidden" name="action" value="reject" />
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}" />
+                    <button type="submit" class="btn-ghost" title="Tolak"><span class="material-symbols-outlined">close</span></button>
+                  </form>
+                {% endif %}
+                <form method="post" class="inline-form" style="display:inline;" onsubmit="return confirm('Hapus peminjaman ini?')">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="booking_id" value="{{ booking.id }}" />
-                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
                 </form>
               </td>
             </tr>

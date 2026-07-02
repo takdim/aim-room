@@ -8,7 +8,7 @@
   <section class="dashboard-card">
     <header class="card-header">
       <div class="card-title">
-        <span class="card-icon">⏱</span>
+        <span class="card-icon"><span class="material-symbols-outlined">schedule</span></span>
         <h2>Kelola Jadwal</h2>
       </div>
       <button type="button" class="btn btn-primary" data-modal-open="schedule-modal">
@@ -17,8 +17,18 @@
     </header>
 
     <section class="toolbar toolbar-compact">
-      <form method="get" class="search">
-        <input name="q" type="search" placeholder="Cari jadwal..." value="{{ q }}" />
+      <form method="get" class="search" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <input name="q" type="search" placeholder="Cari jadwal..." value="{{ q }}" style="min-width:180px;" />
+        <select name="day" style="height:36px;border:1px solid var(--line);border-radius:6px;padding:0 .6rem;font-size:.85rem;background:var(--surface);color:var(--text);">
+          <option value="">Semua Hari</option>
+          {% for hari in ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] %}
+            <option value="{{ hari }}" {% if day == hari %}selected{% endif %}>{{ hari }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" style="height:36px;padding:0 .9rem;border-radius:6px;background:var(--primary);color:#fff;border:0;font-size:.82rem;font-weight:600;cursor:pointer;">Filter</button>
+        {% if q or day %}
+          <a href="{{ url_for('dashboard.staff_schedules') }}" style="font-size:.8rem;color:#64748b;text-decoration:none;padding:4px 8px;">&#x2715; Reset</a>
+        {% endif %}
       </form>
     </section>
 
@@ -38,13 +48,12 @@
           {% for row in schedules %}
             {% set sched = row[0] %}
             {% set course = row[1] %}
-            {% set lecturer = row[2] %}
-            {% set room = row[3] %}
+            {% set room = row[2] %}
             <tr>
               <td>{{ sched.day_name }}</td>
               <td>{{ sched.start_time }} - {{ sched.end_time }}</td>
-              <td class="cell-name">{{ course.course_name }}</td>
-              <td>{{ lecturer.lecturer_name }}</td>
+              <td class="cell-name">{{ course.course_name }}{% if sched.class_name %} <small style="color:#94a3b8">({{ sched.class_name }})</small>{% endif %}</td>
+              <td>{{ sched.lecturers | map(attribute='lecturer_name') | join(', ') or '-' }}</td>
               <td>{{ room.room_name }}</td>
               <td class="cell-actions">
                 <button type="button" class="btn-ghost" data-edit
@@ -53,13 +62,14 @@
                   data-start="{{ sched.start_time }}"
                   data-end="{{ sched.end_time }}"
                   data-course="{{ course.id }}"
-                  data-lecturer="{{ lecturer.id }}"
+                  data-class-name="{{ sched.class_name or '' }}"
+                  data-lecturers="{{ sched.lecturers | map(attribute='id') | list | tojson }}"
                   data-room="{{ room.id }}"
-                  data-semester="{{ sched.semester_id }}">✎</button>
+                  data-semester="{{ sched.semester_id }}"><span class="material-symbols-outlined">edit</span></button>
                 <form method="post" class="inline-form" onsubmit="return confirm('Hapus jadwal ini?')">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="schedule_id" value="{{ sched.id }}" />
-                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
                 </form>
               </td>
             </tr>
@@ -71,13 +81,44 @@
         </tbody>
       </table>
     </section>
+
+    {% if pagination.pages > 1 %}
+    <nav class="pagination" aria-label="Navigasi halaman">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('dashboard.staff_schedules', page=pagination.prev_num, q=q, day=day) }}" class="pagination-btn" aria-label="Sebelumnya">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </a>
+      {% else %}
+        <span class="pagination-btn disabled" aria-disabled="true"><span class="material-symbols-outlined">chevron_left</span></span>
+      {% endif %}
+
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+          <a href="{{ url_for('dashboard.staff_schedules', page=p, q=q, day=day) }}"
+             class="pagination-btn{% if p == pagination.page %} active{% endif %}">{{ p }}</a>
+        {% else %}
+          <span class="pagination-ellipsis">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if pagination.has_next %}
+        <a href="{{ url_for('dashboard.staff_schedules', page=pagination.next_num, q=q, day=day) }}" class="pagination-btn" aria-label="Berikutnya">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </a>
+      {% else %}
+        <span class="pagination-btn disabled" aria-disabled="true"><span class="material-symbols-outlined">chevron_right</span></span>
+      {% endif %}
+
+      <span class="pagination-info">{{ pagination.total }} jadwal</span>
+    </nav>
+    {% endif %}
   </section>
 
   <div class="modal-backdrop" data-modal="schedule-modal" aria-hidden="true">
     <div class="modal">
       <div class="modal-header">
         <h3 id="schedule-modal-title">Tambah Jadwal</h3>
-        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+        <button type="button" class="btn-ghost" data-modal-close><span class="material-symbols-outlined">close</span></button>
       </div>
       <form method="post" id="schedule-form">
         <input type="hidden" name="action" value="add" />
@@ -120,13 +161,26 @@
           </select>
         </div>
         <div class="field">
-          <label for="lecturer_id">Pengajar</label>
-          <select id="lecturer_id" name="lecturer_id" required>
-            <option value="">Pilih pengajar</option>
-            {% for lecturer in lecturers %}
-              <option value="{{ lecturer.id }}">{{ lecturer.lecturer_name }}</option>
-            {% endfor %}
-          </select>
+          <label for="class_name">Nama Kelas (Seksi)</label>
+          <input id="class_name" name="class_name" type="text" placeholder="cth: Pengantar Pariwisata (A)" />
+        </div>
+        <div class="field">
+          <label>Pengajar <small style="font-weight:400;color:#94a3b8">(bisa pilih lebih dari satu)</small></label>
+          <div id="lecturer-picker" style="border:1.5px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+            <div style="padding:6px 8px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
+              <input id="lecturer-search" type="text" placeholder="Cari nama dosen..."
+                style="width:100%;border:none;background:transparent;outline:none;font-size:.85rem;" />
+            </div>
+            <div id="lecturer-list" style="max-height:160px;overflow-y:auto;padding:4px 0;display:flex;flex-direction:column;">
+              {% for lecturer in lecturers %}
+                <label style="display:flex;align-items:center;gap:8px;padding:5px 10px;cursor:pointer;font-size:.85rem;line-height:1.4;min-width:0;" data-name="{{ lecturer.lecturer_name | lower }}">
+                  <input type="checkbox" name="lecturer_ids" value="{{ lecturer.id }}" style="flex-shrink:0;accent-color:#1e3a8a;width:14px;height:14px;" />
+                  <span style="flex:1;">{{ lecturer.lecturer_name }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </div>
+          <div id="lecturer-selected-info" style="font-size:.78rem;color:#64748b;margin-top:4px;">Belum ada pengajar dipilih</div>
         </div>
         <div class="field">
           <label for="room_id">Ruangan</label>
@@ -159,20 +213,6 @@
       scheduleBackdrop.setAttribute('aria-hidden', 'true');
     };
 
-    scheduleModalBtn.addEventListener('click', () => {
-      scheduleTitle.textContent = 'Tambah Jadwal';
-      scheduleForm.action.value = 'add';
-      scheduleForm.schedule_id.value = '';
-      scheduleForm.day_name.value = '';
-      scheduleForm.start_time.value = '';
-      scheduleForm.end_time.value = '';
-      scheduleForm.course_id.value = '';
-      scheduleForm.lecturer_id.value = '';
-      scheduleForm.room_id.value = '';
-      scheduleForm.semester_id.value = '';
-      openScheduleModal();
-    });
-
     document.querySelectorAll('[data-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
         scheduleTitle.textContent = 'Edit Jadwal';
@@ -182,12 +222,71 @@
         scheduleForm.start_time.value = btn.dataset.start;
         scheduleForm.end_time.value = btn.dataset.end;
         scheduleForm.course_id.value = btn.dataset.course;
-        scheduleForm.lecturer_id.value = btn.dataset.lecturer;
+        scheduleForm.class_name.value = btn.dataset.className || '';
+        const lecturerIds = JSON.parse(btn.dataset.lecturers || '[]');
+        setLecturerCheckboxes(lecturerIds);
         scheduleForm.room_id.value = btn.dataset.room;
         scheduleForm.semester_id.value = btn.dataset.semester;
         openScheduleModal();
       });
     });
+
+    scheduleModalBtn.addEventListener('click', () => {
+      scheduleTitle.textContent = 'Tambah Jadwal';
+      scheduleForm.action.value = 'add';
+      scheduleForm.schedule_id.value = '';
+      scheduleForm.day_name.value = '';
+      scheduleForm.start_time.value = '';
+      scheduleForm.end_time.value = '';
+      scheduleForm.course_id.value = '';
+      scheduleForm.class_name.value = '';
+      setLecturerCheckboxes([]);
+      scheduleForm.room_id.value = '';
+      scheduleForm.semester_id.value = '';
+      openScheduleModal();
+    });
+
+    // --- Lecturer searchable checkbox ---
+    const lecturerSearch = document.getElementById('lecturer-search');
+    const lecturerList   = document.getElementById('lecturer-list');
+    const lecturerInfo   = document.getElementById('lecturer-selected-info');
+
+    function updateLecturerInfo() {
+      const checked = lecturerList.querySelectorAll('input[type=checkbox]:checked');
+      const names = Array.from(checked).map(cb => cb.closest('label').textContent.trim());
+      lecturerInfo.textContent = names.length ? names.join(', ') : 'Belum ada pengajar dipilih';
+    }
+
+    function setLecturerCheckboxes(ids) {
+      lecturerList.querySelectorAll('input[type=checkbox]').forEach(cb => {
+        cb.checked = ids.includes(parseInt(cb.value));
+      });
+      lecturerSearch.value = '';
+      lecturerList.querySelectorAll('label[data-name]').forEach(lbl => lbl.style.display = '');
+      updateLecturerInfo();
+    }
+
+    lecturerList.addEventListener('change', updateLecturerInfo);
+
+    lecturerSearch.addEventListener('input', () => {
+      const q = lecturerSearch.value.toLowerCase();
+      lecturerList.querySelectorAll('label[data-name]').forEach(lbl => {
+        lbl.style.display = lbl.dataset.name.includes(q) ? '' : 'none';
+      });
+    });
+
+    // Validasi: minimal 1 pengajar dipilih sebelum submit
+    scheduleForm.addEventListener('submit', (e) => {
+      const checked = lecturerList.querySelectorAll('input[type=checkbox]:checked');
+      if (checked.length === 0) {
+        e.preventDefault();
+        lecturerInfo.textContent = '<span class="material-symbols-outlined">warning</span> Pilih minimal satu pengajar!';
+        lecturerInfo.style.color = '#dc2626';
+        document.getElementById('lecturer-picker').style.borderColor = '#dc2626';
+      }
+    });
+
+    updateLecturerInfo();
 
     scheduleClose.addEventListener('click', closeScheduleModal);
     scheduleBackdrop.addEventListener('click', (e) => {

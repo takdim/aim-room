@@ -1,0 +1,58 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Template Pakta Integritas{% endblock %}
+
+{% set active_menu = "pakta" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <span class="card-icon"><span class="material-symbols-outlined">edit_note</span></span>
+        <h2>Template Pakta Integritas</h2>
+      </div>
+    </header>
+
+    <div style="padding:1rem;max-width:520px;">
+      <p style="font-size:.88rem;color:#718096;margin-bottom:1rem;">
+        Unggah file template pakta integritas (PDF/DOCX). Peminjam akan mendownload template ini, mengisi, menandatangani, lalu mengunggah kembali saat pengajuan event.
+      </p>
+      <form method="post" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:.7rem;">
+        <div class="field">
+          <label for="template_file">File Template (PDF, DOCX, DOC) *</label>
+          <input id="template_file" name="template_file" type="file" accept=".pdf,.docx,.doc" required />
+        </div>
+        <button type="submit" class="primary" style="align-self:flex-start;">Upload Template</button>
+      </form>
+    </div>
+
+    <section class="table-wrapper" style="margin-top:1.5rem;">
+      <h4 style="padding:0 1rem .5rem;color:#4a5568;">Riwayat Upload</h4>
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nama File</th>
+            <th>Diunggah</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tmpl in templates %}
+            <tr {% if loop.first %}style="font-weight:600;"{% endif %}>
+              <td>{{ loop.revindex }}</td>
+              <td>{{ tmpl.original_filename or tmpl.file_path }}</td>
+              <td>{{ tmpl.uploaded_at.strftime("%d %b %Y %H:%M") if tmpl.uploaded_at else "-" }}</td>
+              <td>
+                <a href="{{ url_for('dashboard.staff_download_pakta_template', template_id=tmpl.id) }}" class="btn-ghost"><span class="material-symbols-outlined">download</span> Download</a>
+                {% if loop.first %}<span class="badge" style="margin-left:.4rem;background:#c6f6d5;color:#22543d;">Aktif</span>{% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="cell-empty">Belum ada template.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </section>
+{% endblock %}

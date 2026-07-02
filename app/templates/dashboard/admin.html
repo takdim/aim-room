@@ -3,99 +3,415 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo-box">RA</div>
-        <div>
-          <div class="sidebar-title">Room Admin</div>
-          <div class="sidebar-subtitle">Manajemen User</div>
-        </div>
-      </div>
+<style>
+  /* ── Admin shell ── */
+  .adm-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+    background: #f0f2f5;
+  }
 
-      <div>
-        <div class="sidebar-section-title">Menu</div>
-        <nav class="sidebar-menu">
-          <a class="active" href="{{ url_for('dashboard.admin_home') }}">
-            <span class="menu-icon"></span>
-            <span>Dashboard</span>
-          </a>
-          <a href="#add-user">
-            <span class="menu-icon"></span>
-            <span>Tambah User</span>
-          </a>
-        </nav>
-      </div>
+  /* ── Sidebar ── */
+  .adm-sidebar {
+    background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+    color: #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .adm-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid #ffffff14;
+  }
+  .adm-brand-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 1rem; color: #fff;
+    flex-shrink: 0;
+  }
+  .adm-brand-name { font-weight: 700; color: #f1f5f9; font-size: .95rem; }
+  .adm-brand-sub  { font-size: .75rem; color: #64748b; margin-top: 1px; }
 
-      <div class="sidebar-footer">
-        <div class="avatar">A</div>
-        <div class="user-meta">
-          <span class="user-name">{{ full_name }}</span>
-          <a href="{{ url_for('auth.logout') }}">Logout</a>
-        </div>
-      </div>
-    </aside>
+  .adm-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .adm-nav-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: 10px 8px 4px; }
+  .adm-nav a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 10px;
+    text-decoration: none; color: #94a3b8; font-size: .88rem; font-weight: 500;
+    transition: background .15s, color .15s;
+  }
+  .adm-nav a:hover { background: #ffffff0d; color: #e2e8f0; }
+  .adm-nav a.active { background: #3b82f620; color: #60a5fa; }
+  .adm-nav a .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
 
-    <section class="content">
-      <div class="topbar">
-        <h1>Dashboard</h1>
-      </div>
+  .adm-sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #ffffff14;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .adm-avatar {
+    width: 34px; height: 34px; border-radius: 999px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: grid; place-items: center;
+    font-weight: 700; font-size: .85rem; color: #fff; flex-shrink: 0;
+  }
+  .adm-avatar-name { font-size: .85rem; color: #e2e8f0; font-weight: 600; }
+  .adm-avatar-role { font-size: .72rem; color: #64748b; }
+  .adm-logout { margin-left: auto; font-size: .78rem; color: #ef4444; text-decoration: none; }
+  .adm-logout:hover { color: #fca5a5; }
 
-      <header class="page-header">
-        <h2>Selamat datang, {{ full_name }}</h2>
-        <p>Ringkasan user dan pengelolaan staff.</p>
-      </header>
+  /* ── Main content ── */
+  .adm-main { padding: 28px 32px 48px; overflow-y: auto; }
 
-      <section class="stats-grid">
-        <article class="stat-card">
-          <p class="stat-label">Total User</p>
-          <p class="stat-value">{{ total_users }}</p>
-        </article>
-        <article class="stat-card">
-          <p class="stat-label">Jumlah Admin</p>
-          <p class="stat-value">{{ admin_count }}</p>
-        </article>
-        <article class="stat-card">
-          <p class="stat-label">Jumlah Staff</p>
-          <p class="stat-value">{{ staff_count }}</p>
-        </article>
-      </section>
+  .adm-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .adm-page-title { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+  .adm-page-sub { font-size: .85rem; color: #64748b; margin-top: 2px; }
 
-      <section id="add-user" class="two-col">
-        <form method="post" class="panel">
-          <h3>Tambah User Staff</h3>
-          <div class="field">
-            <label for="full_name">Nama Lengkap</label>
-            <input id="full_name" name="full_name" type="text" required />
-          </div>
-          <div class="field">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" required />
-          </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" required />
-          </div>
-          <div class="field">
-            <label for="confirm_password">Konfirmasi Password</label>
-            <input id="confirm_password" name="confirm_password" type="password" required />
-          </div>
-          <button type="submit" class="primary">Buat Staff</button>
-        </form>
+  /* ── Stat cards ── */
+  .adm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+  .adm-stat {
+    background: #fff; border-radius: 16px; padding: 20px 22px;
+    box-shadow: 0 1px 3px #0000000a, 0 1px 2px #0000000a;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .adm-stat-icon {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 1.3rem; flex-shrink: 0;
+  }
+  .adm-stat-icon.blue   { background: #eff6ff; }
+  .adm-stat-icon.purple { background: #f5f3ff; }
+  .adm-stat-icon.green  { background: #f0fdf4; }
+  .adm-stat-num  { font-size: 1.7rem; font-weight: 800; color: #0f172a; line-height: 1; }
+  .adm-stat-lbl  { font-size: .78rem; color: #64748b; margin-top: 3px; }
 
-        <div class="panel">
-          <h3>Daftar Staff</h3>
-          {% if staff_users %}
-            <ul class="staff-list">
-              {% for staff in staff_users %}
-                <li><strong>{{ staff.full_name }}</strong><span>{{ staff.email }}</span></li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p>Belum ada user staff.</p>
-          {% endif %}
-        </div>
-      </section>
-    </section>
+  /* ── Two-col layout ── */
+  .adm-cols { display: grid; grid-template-columns: 420px 1fr; gap: 20px; align-items: start; }
+
+  /* ── Form card ── */
+  .adm-card {
+    background: #fff; border-radius: 18px; padding: 24px;
+    box-shadow: 0 1px 3px #0000000a, 0 1px 2px #0000000a;
+  }
+  .adm-card-title {
+    font-size: 1rem; font-weight: 700; color: #0f172a;
+    margin: 0 0 18px; display: flex; align-items: center; gap: 8px;
+  }
+  .adm-card-title .icon { font-size: 1.1rem; }
+
+  .adm-field { margin-bottom: 14px; }
+  .adm-field label { display: block; font-size: .8rem; font-weight: 600; color: #374151; margin-bottom: 5px; }
+  .adm-field input,
+  .adm-field select {
+    width: 100%; padding: 9px 12px; border-radius: 10px;
+    border: 1.5px solid #e5e7eb; font-size: .88rem; color: #111827;
+    background: #f9fafb; outline: none; transition: border-color .15s, background .15s;
+  }
+  .adm-field input:focus,
+  .adm-field select:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px #3b82f620; }
+  .adm-field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  .adm-btn {
+    width: 100%; padding: 10px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: .9rem; font-weight: 600; letter-spacing: .01em;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #fff; margin-top: 4px;
+    transition: opacity .15s, transform .1s;
+  }
+  .adm-btn:hover { opacity: .9; transform: translateY(-1px); }
+  .adm-btn:active { transform: translateY(0); }
+
+  /* ── Flash ── */
+  .adm-flash {
+    padding: 10px 14px; border-radius: 10px; font-size: .85rem;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .adm-flash.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  .adm-flash.info  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+  /* ── User list ── */
+  .adm-user-list { display: flex; flex-direction: column; gap: 2px; }
+  .adm-user-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 12px; transition: background .12s;
+  }
+  .adm-user-row:hover { background: #f8fafc; }
+  .adm-user-ava {
+    width: 36px; height: 36px; border-radius: 999px;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: .82rem; color: #fff; flex-shrink: 0;
+  }
+  .adm-user-info { flex: 1; min-width: 0; }
+  .adm-user-name { font-size: .88rem; font-weight: 600; color: #0f172a; }
+  .adm-user-email { font-size: .75rem; color: #94a3b8; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .adm-role-badge {
+    font-size: .7rem; font-weight: 700; padding: 3px 9px;
+    border-radius: 999px; white-space: nowrap; letter-spacing: .02em;
+  }
+
+  /* role colours */
+  .role-staff    { background: #eff6ff; color: #1d4ed8; }
+  .role-kasubag  { background: #f0fdf4; color: #15803d; }
+  .role-ktu      { background: #fffbeb; color: #b45309; }
+  .role-wd2      { background: #faf5ff; color: #7c3aed; }
+  .role-dekan    { background: #fff1f2; color: #be123c; }
+
+  /* avatar colours */
+  .ava-staff    { background: linear-gradient(135deg,#3b82f6,#60a5fa); }
+  .ava-kasubag  { background: linear-gradient(135deg,#22c55e,#4ade80); }
+  .ava-ktu      { background: linear-gradient(135deg,#f59e0b,#fbbf24); }
+  .ava-wd2      { background: linear-gradient(135deg,#8b5cf6,#a78bfa); }
+  .ava-dekan    { background: linear-gradient(135deg,#f43f5e,#fb7185); }
+
+  /* ── Mobile top bar ── */
+  .adm-mobilebar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .adm-mobilebar-brand { display: flex; align-items: center; gap: 10px; }
+  .adm-mobilebar-name { font-weight: 700; color: #f1f5f9; font-size: .9rem; }
+  .adm-hamburger {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; gap: 5px; padding: 4px;
+  }
+  .adm-hamburger span {
+    display: block; width: 22px; height: 2px;
+    background: #94a3b8; border-radius: 2px;
+    transition: transform .2s, opacity .2s;
+  }
+
+  /* ── Drawer overlay ── */
+  .adm-overlay {
+    display: none; position: fixed; inset: 0;
+    background: #00000066; z-index: 200;
+  }
+  .adm-overlay.open { display: block; }
+
+  /* ── Responsive breakpoints ── */
+  @media (max-width: 900px) {
+    .adm-cols { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .adm-shell { grid-template-columns: 1fr; }
+
+    .adm-sidebar {
+      position: fixed; left: -280px; top: 0; bottom: 0;
+      width: 260px; height: 100vh; z-index: 300;
+      transition: left .25s cubic-bezier(.4,0,.2,1);
+      box-shadow: none;
+    }
+    .adm-sidebar.open {
+      left: 0;
+      box-shadow: 4px 0 24px #00000040;
+    }
+
+    .adm-mobilebar { display: flex; }
+
+    .adm-main { padding: 16px 14px 48px; }
+
+    .adm-stats { grid-template-columns: 1fr 1fr; }
+    .adm-stats .adm-stat:last-child { grid-column: 1 / -1; }
+
+    .adm-cols { grid-template-columns: 1fr; }
+
+    .adm-page-title { font-size: 1.15rem; }
+    .adm-topbar { margin-bottom: 16px; }
+  }
+
+  @media (max-width: 480px) {
+    .adm-stats { grid-template-columns: 1fr; }
+    .adm-stats .adm-stat:last-child { grid-column: auto; }
+    .adm-stat { padding: 14px 16px; }
+    .adm-card { padding: 18px 16px; }
+  }
+</style>
+
+<!-- Mobile top bar -->
+<div class="adm-mobilebar">
+  <div class="adm-mobilebar-brand">
+    <div class="adm-brand-icon">RA</div>
+    <div class="adm-mobilebar-name">Room Admin</div>
   </div>
+  <button class="adm-hamburger" id="adm-toggle" aria-label="Buka menu">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- Overlay -->
+<div class="adm-overlay" id="adm-overlay"></div>
+
+<div class="adm-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="adm-sidebar">
+    <div class="adm-brand">
+      <div class="adm-brand-icon">RA</div>
+      <div>
+        <div class="adm-brand-name">Room Admin</div>
+        <div class="adm-brand-sub">Sistem Peminjaman Ruangan</div>
+      </div>
+    </div>
+
+    <nav class="adm-nav">
+      <div class="adm-nav-label">Menu Utama</div>
+      <a class="active" href="{{ url_for('dashboard.admin_home') }}">
+        <span class="nav-icon"><span class="material-symbols-outlined">home</span></span> Dashboard
+      </a>
+      <a href="#add-user">
+        <span class="nav-icon"><span class="material-symbols-outlined">add</span></span> Tambah User
+      </a>
+      <div class="adm-nav-label" style="margin-top:8px;">Navigasi</div>
+      <a href="{{ url_for('main.index') }}">
+        <span class="nav-icon"><span class="material-symbols-outlined">language</span></span> Halaman Publik
+      </a>
+    </nav>
+
+    <div class="adm-sidebar-footer">
+      <div class="adm-avatar">{{ full_name[0]|upper }}</div>
+      <div>
+        <div class="adm-avatar-name">{{ full_name }}</div>
+        <div class="adm-avatar-role">Administrator</div>
+      </div>
+      <a class="adm-logout" href="{{ url_for('auth.logout') }}">Keluar</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="adm-main">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="adm-flash {{ category }}">
+          {{ ('<span class="material-symbols-outlined">warning</span>' if category == "error" else '<span class="material-symbols-outlined">check</span>') | safe }} {{ message }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="adm-topbar">
+      <div>
+        <div class="adm-page-title">Dashboard Admin</div>
+        <div class="adm-page-sub">Kelola akun dan hak akses pengguna sistem</div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="adm-stats">
+      <div class="adm-stat">
+        <div class="adm-stat-icon blue"><span class="material-symbols-outlined">group</span></div>
+        <div>
+          <div class="adm-stat-num">{{ total_users }}</div>
+          <div class="adm-stat-lbl">Total Pengguna</div>
+        </div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat-icon purple"><span class="material-symbols-outlined">security</span></div>
+        <div>
+          <div class="adm-stat-num">{{ admin_count }}</div>
+          <div class="adm-stat-lbl">Administrator</div>
+        </div>
+      </div>
+      <div class="adm-stat">
+        <div class="adm-stat-icon green"><span class="material-symbols-outlined">key</span></div>
+        <div>
+          <div class="adm-stat-num">{{ all_users | length }}</div>
+          <div class="adm-stat-lbl">Akun Lainnya</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two column -->
+    <div class="adm-cols" id="add-user">
+
+      <!-- Form tambah user -->
+      <div class="adm-card">
+        <div class="adm-card-title"><span class="icon"><span class="material-symbols-outlined">add</span></span> Tambah User Baru</div>
+        <form method="post">
+          <div class="adm-field">
+            <label>Nama Lengkap</label>
+            <input name="full_name" type="text" placeholder="Contoh: Ahmad Fauzi" required />
+          </div>
+          <div class="adm-field">
+            <label>Email</label>
+            <input name="email" type="email" placeholder="email@contoh.com" required />
+          </div>
+          <div class="adm-field">
+            <label>Role</label>
+            <select name="role">
+              {% for r in roles %}
+                <option value="{{ r }}">{{ r | title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Password</label>
+            <input name="password" type="password" placeholder="Minimal 6 karakter" required />
+          </div>
+          <div class="adm-field">
+            <label>Konfirmasi Password</label>
+            <input name="confirm_password" type="password" placeholder="Ulangi password" required />
+          </div>
+          <button type="submit" class="adm-btn">Buat Akun</button>
+        </form>
+      </div>
+
+      <!-- Daftar user -->
+      <div class="adm-card">
+        <div class="adm-card-title"><span class="icon"><span class="material-symbols-outlined">person</span></span> Daftar Pengguna</div>
+        {% if all_users %}
+          <div class="adm-user-list">
+            {% for u in all_users %}
+              <div class="adm-user-row">
+                <div class="adm-user-ava ava-{{ u.role }}">
+                  {{ u.full_name[0]|upper }}
+                </div>
+                <div class="adm-user-info">
+                  <div class="adm-user-name">{{ u.full_name }}</div>
+                  <div class="adm-user-email">{{ u.email }}</div>
+                </div>
+                <span class="adm-role-badge role-{{ u.role }}">{{ u.role }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color:#94a3b8;font-size:.88rem;text-align:center;padding:24px 0;">
+            Belum ada pengguna terdaftar.
+          </p>
+        {% endif %}
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const sidebar  = document.querySelector('.adm-sidebar');
+  const overlay  = document.getElementById('adm-overlay');
+  const toggle   = document.getElementById('adm-toggle');
+
+  function openMenu()  { sidebar.classList.add('open');  overlay.classList.add('open');  }
+  function closeMenu() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+
+  toggle.addEventListener('click', () => sidebar.classList.contains('open') ? closeMenu() : openMenu());
+  overlay.addEventListener('click', closeMenu);
+
+  // Close menu when a nav link is clicked on mobile
+  sidebar.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+</script>
 {% endblock %}

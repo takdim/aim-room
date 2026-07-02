@@ -1,0 +1,145 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Detail Peminjaman #{{ booking.id }}{% endblock %}
+
+{% set active_menu = "bookings" %}
+
+{% block dashboard_content %}
+  <section class="dashboard-card">
+    <header class="card-header">
+      <div class="card-title">
+        <a href="{{ url_for('dashboard.staff_bookings') }}" class="btn-ghost" style="margin-right:.5rem;">&lt; Kembali</a>
+        <span class="card-icon"><span class="material-symbols-outlined">folder_open</span></span>
+        <h2>Detail Peminjaman #{{ booking.id }}</h2>
+      </div>
+    </header>
+
+    <div style="padding:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+
+      <div class="detail-section">
+        <h4 style="margin-bottom:.6rem;color:#4a5568;">Informasi Peminjaman</h4>
+        <table class="info-table" style="width:100%;font-size:.9rem;border-collapse:collapse;">
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;width:40%;">Ruangan</th>
+              <td>{{ booking.room.room_name if booking.room else "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Jenis</th>
+              <td>{{ "Event / Hari Libur" if booking.booking_type == "event" else "Peminjaman Biasa" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Tanggal Penggunaan</th>
+              <td>{{ booking.booking_date.strftime("%d %B %Y") if booking.booking_date else "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Waktu</th>
+              <td>{% if booking.start_time and booking.end_time %}{{ booking.start_time.strftime("%H:%M") }} – {{ booking.end_time.strftime("%H:%M") }}{% else %}-{% endif %}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Tanggal Pengajuan</th>
+              <td>{{ booking.submission_date.strftime("%d %B %Y") if booking.submission_date else "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Status</th>
+              <td><span class="badge">{{ booking.status or "Menunggu Staff" }}</span></td></tr>
+        </table>
+      </div>
+
+      <div class="detail-section">
+        <h4 style="margin-bottom:.6rem;color:#4a5568;">Data Peminjam</h4>
+        <table class="info-table" style="width:100%;font-size:.9rem;border-collapse:collapse;">
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;width:40%;">Nama (Sistem)</th>
+              <td>{{ booking.borrower_name or "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Nama (Pakta)</th>
+              <td><strong>{{ booking.name_on_pakta or "-" }}</strong></td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">No. Telepon</th>
+              <td>{{ booking.phone_number or "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Email</th>
+              <td>{{ booking.borrower_email or "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Organisasi</th>
+              <td>{{ booking.organization or "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Tujuan</th>
+              <td>{{ booking.purpose or "-" }}</td></tr>
+          <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Catatan</th>
+              <td>{{ booking.notes or "-" }}</td></tr>
+        </table>
+      </div>
+
+      {% if booking.booking_type == "event" %}
+        <div class="detail-section" style="grid-column:1/-1;">
+          <h4 style="margin-bottom:.8rem;color:#4a5568;">File Dokumen Yang Diunggah</h4>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+            {% if booking.pakta_integritas_path %}
+              <div style="border:1px solid #e2e8f0;border-radius:8px;padding:.8rem 1.2rem;flex:1;min-width:200px;">
+                <div style="font-weight:600;margin-bottom:.4rem;"><span class="material-symbols-outlined">description</span> Pakta Integritas</div>
+                <a href="{{ url_for('dashboard.staff_serve_file', booking_id=booking.id, field='pakta_integritas_path') }}"
+                   target="_blank" class="primary" style="display:inline-block;padding:.3rem .8rem;font-size:.85rem;">
+                  Buka File
+                </a>
+              </div>
+            {% else %}
+              <div style="border:1px solid #fed7d7;border-radius:8px;padding:.8rem 1.2rem;background:#fff5f5;flex:1;min-width:200px;">
+                <div style="color:#e53e3e;"><span class="material-symbols-outlined">description</span> Pakta Integritas belum diunggah</div>
+              </div>
+            {% endif %}
+            {% if booking.surat_permohonan_path %}
+              <div style="border:1px solid #e2e8f0;border-radius:8px;padding:.8rem 1.2rem;flex:1;min-width:200px;">
+                <div style="font-weight:600;margin-bottom:.4rem;"><span class="material-symbols-outlined">description</span> Surat Permohonan</div>
+                <a href="{{ url_for('dashboard.staff_serve_file', booking_id=booking.id, field='surat_permohonan_path') }}"
+                   target="_blank" class="primary" style="display:inline-block;padding:.3rem .8rem;font-size:.85rem;">
+                  Buka File
+                </a>
+              </div>
+            {% else %}
+              <div style="border:1px solid #fed7d7;border-radius:8px;padding:.8rem 1.2rem;background:#fff5f5;flex:1;min-width:200px;">
+                <div style="color:#e53e3e;"><span class="material-symbols-outlined">description</span> Surat Permohonan belum diunggah</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if booking.status == "Menunggu Staff" %}
+        <div class="detail-section" style="grid-column:1/-1;">
+          <h4 style="margin-bottom:.8rem;color:#4a5568;">Verifikasi Staff</h4>
+          <form method="post" action="{{ url_for('dashboard.staff_bookings') }}">
+            <input type="hidden" name="booking_id" value="{{ booking.id }}" />
+
+            <div style="display:flex;flex-direction:column;gap:.8rem;margin-bottom:1rem;">
+              <label style="display:flex;align-items:center;gap:.6rem;font-size:.92rem;">
+                <input type="checkbox" name="is_fib_student" value="1" {% if booking.is_fib_student %}checked{% endif %} />
+                Peminjam adalah Mahasiswa FIB (sudah diperiksa dari surat/pakta)
+              </label>
+              <label style="display:flex;align-items:center;gap:.6rem;font-size:.92rem;">
+                <input type="checkbox" name="is_bem_verified" value="1" {% if booking.is_bem_verified %}checked{% endif %} />
+                Surat permohonan diketahui oleh BEM (sudah diperiksa)
+              </label>
+            </div>
+
+            <div style="margin-bottom:.8rem;">
+              <label for="staff_note" style="display:block;margin-bottom:.3rem;font-size:.9rem;">Catatan Staff (opsional):</label>
+              <textarea id="staff_note" name="staff_note" rows="2" style="width:100%;padding:.5rem;border:1px solid #e2e8f0;border-radius:6px;">{{ booking.staff_note or "" }}</textarea>
+            </div>
+
+            <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+              <button type="submit" name="action" value="forward" class="primary">
+                <span class="material-symbols-outlined">check</span> Teruskan ke Kasubag
+              </button>
+              <button type="submit" name="action" value="reject" class="btn-ghost" style="color:#e53e3e;"
+                      onclick="return confirm('Tolak peminjaman ini?')">
+                <span class="material-symbols-outlined">close</span> Tolak
+              </button>
+            </div>
+          </form>
+        </div>
+      {% elif booking.rejection_note %}
+        <div class="detail-section" style="grid-column:1/-1;">
+          <div style="background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;padding:.8rem 1rem;">
+            <strong style="color:#e53e3e;">Ditolak oleh {{ booking.rejected_by or "-" }}</strong>
+            <p style="margin:.3rem 0 0;font-size:.9rem;">{{ booking.rejection_note }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if booking.is_fib_student is not none and booking.status != "Menunggu Staff" %}
+        <div class="detail-section" style="grid-column:1/-1;">
+          <h4 style="margin-bottom:.6rem;color:#4a5568;">Hasil Verifikasi Staff</h4>
+          <ul style="font-size:.9rem;line-height:1.8;">
+            <li>Mahasiswa FIB: {{ "<span class="material-symbols-outlined">check_circle</span> Ya" if booking.is_fib_student else "<span class="material-symbols-outlined">cancel</span> Tidak" }}</li>
+            <li>Surat diketahui BEM: {{ "<span class="material-symbols-outlined">check_circle</span> Ya" if booking.is_bem_verified else "<span class="material-symbols-outlined">cancel</span> Tidak" }}</li>
+            {% if booking.staff_note %}<li>Catatan: {{ booking.staff_note }}</li>{% endif %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

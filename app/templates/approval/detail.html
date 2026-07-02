@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Detail Pengajuan #{{ booking.id }}{% endblock %}
+
+{% block content %}
+  <div class="dashboard-shell">
+    <header class="dashboard-topbar">
+      <div class="dashboard-brand">
+        <div>
+          <div class="dashboard-title">SIKARAENG</div>
+          <div class="dashboard-subtitle">{{ full_name }} ({{ role|upper }})</div>
+        </div>
+      </div>
+      <nav class="dashboard-actions">
+        <a href="{{ url_for('approval.approval_home') }}" class="dashboard-action-link">&lt; Kembali</a>
+        <a href="{{ url_for('auth.logout') }}" class="dashboard-action-link"><span class="action-icon"><span class="material-symbols-outlined">meeting_room</span></span> Keluar</a>
+      </nav>
+    </header>
+
+    <section class="dashboard-content">
+      <section class="dashboard-card">
+        <header class="card-header">
+          <div class="card-title">
+            <span class="card-icon"><span class="material-symbols-outlined">folder_open</span></span>
+            <h2>Detail Pengajuan #{{ booking.id }}</h2>
+          </div>
+        </header>
+
+        <div style="padding:1.2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div>
+            <h4 style="color:#4a5568;margin-bottom:.5rem;">Informasi Peminjaman</h4>
+            <table style="width:100%;font-size:.9rem;border-collapse:collapse;">
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;width:45%;">Ruangan</th><td>{{ booking.room.room_name if booking.room else "-" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Jenis</th><td>{{ "Event/Hari Libur" if booking.booking_type == "event" else "Biasa" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Tanggal Penggunaan</th><td>{{ booking.booking_date.strftime("%d %B %Y") if booking.booking_date else "-" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Waktu</th><td>{% if booking.start_time and booking.end_time %}{{ booking.start_time.strftime("%H:%M") }} – {{ booking.end_time.strftime("%H:%M") }}{% else %}-{% endif %}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Tujuan</th><td>{{ booking.purpose or "-" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Status</th><td><span class="badge">{{ booking.status }}</span></td></tr>
+            </table>
+          </div>
+
+          <div>
+            <h4 style="color:#4a5568;margin-bottom:.5rem;">Data Peminjam</h4>
+            <table style="width:100%;font-size:.9rem;border-collapse:collapse;">
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;width:45%;">Nama (Pakta)</th><td><strong>{{ booking.name_on_pakta or booking.borrower_name or "-" }}</strong></td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Telepon</th><td>{{ booking.phone_number or "-" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Email</th><td>{{ booking.borrower_email or "-" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Organisasi</th><td>{{ booking.organization or "-" }}</td></tr>
+              <tr><th style="text-align:left;padding:.3rem .5rem;color:#718096;">Catatan</th><td>{{ booking.notes or "-" }}</td></tr>
+            </table>
+          </div>
+
+          {% if booking.booking_type == "event" %}
+            <div style="grid-column:1/-1;">
+              <h4 style="color:#4a5568;margin-bottom:.6rem;">Dokumen</h4>
+              <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                {% if booking.pakta_integritas_path %}
+                  <a href="{{ url_for('approval.serve_file', booking_id=booking.id, field='pakta_integritas_path') }}" target="_blank" class="primary" style="padding:.4rem .9rem;"><span class="material-symbols-outlined">description</span> Pakta Integritas</a>
+                {% else %}
+                  <span style="color:#e53e3e;">Pakta belum diunggah</span>
+                {% endif %}
+                {% if booking.surat_permohonan_path %}
+                  <a href="{{ url_for('approval.serve_file', booking_id=booking.id, field='surat_permohonan_path') }}" target="_blank" class="primary" style="padding:.4rem .9rem;"><span class="material-symbols-outlined">description</span> Surat Permohonan</a>
+                {% else %}
+                  <span style="color:#e53e3e;">Surat belum diunggah</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          <div style="grid-column:1/-1;">
+            <h4 style="color:#4a5568;margin-bottom:.6rem;">Hasil Verifikasi Staff</h4>
+            <ul style="font-size:.9rem;line-height:1.8;">
+              <li>Mahasiswa FIB: {{ "<span class="material-symbols-outlined">check_circle</span> Ya" if booking.is_fib_student else "<span class="material-symbols-outlined">cancel</span> Tidak / Belum dicek" }}</li>
+              <li>Surat diketahui BEM: {{ "<span class="material-symbols-outlined">check_circle</span> Ya" if booking.is_bem_verified else "<span class="material-symbols-outlined">cancel</span> Tidak / Belum dicek" }}</li>
+              {% if booking.staff_note %}<li>Catatan Staff: {{ booking.staff_note }}</li>{% endif %}
+            </ul>
+          </div>
+
+          <div style="grid-column:1/-1;">
+            <h4 style="color:#4a5568;margin-bottom:.8rem;">Tindakan Anda ({{ role|upper }})</h4>
+            <form method="post" action="{{ url_for('approval.approval_action', booking_id=booking.id) }}" style="display:flex;flex-direction:column;gap:.7rem;max-width:480px;">
+              <div class="field">
+                <label for="rejection_note">Catatan Penolakan (isi jika menolak):</label>
+                <textarea id="rejection_note" name="rejection_note" rows="2" style="width:100%;padding:.5rem;border:1px solid #e2e8f0;border-radius:6px;"></textarea>
+              </div>
+              <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+                <button type="submit" name="action" value="approve" class="primary"><span class="material-symbols-outlined">check</span> Setujui & Teruskan</button>
+                <button type="submit" name="action" value="reject" class="btn-ghost" style="color:#e53e3e;"
+                        onclick="return confirm('Tolak pengajuan ini?')"><span class="material-symbols-outlined">close</span> Tolak</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </section>
+  </div>
+{% endblock %}

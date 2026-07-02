@@ -8,7 +8,7 @@
   <section class="dashboard-card">
     <header class="card-header">
       <div class="card-title">
-        <span class="card-icon">📅</span>
+        <span class="card-icon"><span class="material-symbols-outlined">event</span></span>
         <h2>Kelola Semester</h2>
       </div>
       <button type="button" class="btn btn-primary" data-modal-open="semester-modal">
@@ -50,11 +50,11 @@
                   data-name="{{ semester.name }}"
                   data-start="{{ semester.start_date or '' }}"
                   data-end="{{ semester.end_date or '' }}"
-                  data-active="{{ '1' if semester.is_active else '0' }}">✎</button>
+                  data-active="{{ '1' if semester.is_active else '0' }}"><span class="material-symbols-outlined">edit</span></button>
                 <form method="post" class="inline-form" onsubmit="return confirm('Hapus semester ini?')">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="semester_id" value="{{ semester.id }}" />
-                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
                 </form>
               </td>
             </tr>
@@ -72,7 +72,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="semester-modal-title">Tambah Semester</h3>
-        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+        <button type="button" class="btn-ghost" data-modal-close><span class="material-symbols-outlined">close</span></button>
       </div>
       <form method="post" id="semester-form">
         <input type="hidden" name="action" value="add" />

@@ -8,7 +8,7 @@
   <section class="dashboard-card">
     <header class="card-header">
       <div class="card-title">
-        <span class="card-icon">👨‍🏫</span>
+        <span class="card-icon"><span class="material-symbols-outlined">school</span></span>
         <h2>Kelola Pengajar</h2>
       </div>
       <button type="button" class="btn btn-primary" data-modal-open="lecturer-modal">
@@ -40,11 +40,11 @@
                 <button type="button" class="btn-ghost" data-edit
                   data-id="{{ lecturer.id }}"
                   data-name="{{ lecturer.lecturer_name }}"
-                  data-nidn="{{ lecturer.nidn or '' }}">✎</button>
+                  data-nidn="{{ lecturer.nidn or '' }}"><span class="material-symbols-outlined">edit</span></button>
                 <form method="post" class="inline-form" onsubmit="return confirm('Hapus pengajar ini?')">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="lecturer_id" value="{{ lecturer.id }}" />
-                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
                 </form>
               </td>
             </tr>
@@ -62,7 +62,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="lecturer-modal-title">Tambah Pengajar</h3>
-        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+        <button type="button" class="btn-ghost" data-modal-close><span class="material-symbols-outlined">close</span></button>
       </div>
       <form method="post" id="lecturer-form">
         <input type="hidden" name="action" value="add" />

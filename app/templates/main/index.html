@@ -1,95 +1,250 @@
 {% extends "base.html" %}
 
-{% block title %}Pemantauan Ruangan Kelas{% endblock %}
+{% block title %}Pemantauan Ruangan — SIKARAENG{% endblock %}
+
 
 {% block content %}
-  <section class="home-page">
-    <header class="home-topbar">
-      <div class="brand">
-        <div class="brand-icon">
-          <span></span>
-        </div>
-        <div>
-          <div class="brand-title">SIKARAENG</div>
-          <div class="brand-subtitle">Sistem Informasi Kegiatan & Ruang</div>
-        </div>
-      </div>
-      <nav class="home-nav">
-        <a href="{{ url_for('main.booking_index') }}">Peminjaman Ruangan</a>
-      </nav>
-    </header>
+<style>
+  /* ── Reset for this page ── */
+  body { background: #f1f5f9; }
 
-    <div class="home-shell">
-      <header class="home-hero">
-        <div>
-          <h1>Pemantauan Ruangan Kelas</h1>
-          <p>Lihat jadwal dan status ruangan kelas hari ini</p>
-        </div>
-        <form method="get" class="day-select-form">
-          <select name="day" onchange="this.form.submit()" class="day-select-input">
-            {% for day in days %}
-              <option value="{{ day }}" {% if day == selected_day %}selected{% endif %}>{{ day }}</option>
-            {% endfor %}
-          </select>
-        </form>
-      </header>
+  /* ── TOPBAR ── */
+  .idx-topbar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+    box-shadow: 0 2px 12px #1e3a8a33;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .idx-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .idx-brand-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: #ffffff25;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: .95rem; color: #fff;
+    border: 1.5px solid #ffffff40;
+  }
+  .idx-brand-name { font-weight: 800; color: #fff; font-size: .95rem; letter-spacing: .02em; }
+  .idx-brand-sub  { font-size: .7rem; color: #ffffff99; margin-top: 1px; }
+  .idx-nav a {
+    color: #ffffffcc; text-decoration: none; font-size: .85rem; font-weight: 600;
+    padding: 7px 16px; border-radius: 8px;
+    background: #ffffff18; border: 1px solid #ffffff28;
+    transition: background .15s;
+  }
+  .idx-nav a:hover { background: #ffffff30; color: #fff; }
 
-      <div class="filter-section">
-        <div class="legend">
-          <div class="legend-item"><span class="dot dot-live"></span> Sedang Berlangsung</div>
-          <div class="legend-item"><span class="dot dot-scheduled"></span> Ada Jadwal</div>
-          <div class="legend-item"><span class="dot dot-empty"></span> Kosong</div>
-        </div>
-      </div>
+  /* ── HERO ── */
+  .idx-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 36px 28px 48px;
+    color: #fff;
+  }
+  .idx-hero-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .idx-hero h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 6px; line-height: 1.2; }
+  .idx-hero p  { font-size: .9rem; color: #ffffff99; margin: 0; }
 
-      <section class="room-grid home-grid">
-        {% for room in rooms %}
-          {% set current = current_by_room.get(room.id) %}
-          {% set has_schedule = has_schedule_by_room.get(room.id) %}
-          <a class="room-card home-card" href="{{ url_for('main.room_schedule', room_id=room.id, day=selected_day) }}">
-            <div class="room-header home-card-header">
-              <div class="room-title">
-                {% if current %}
-                  <span class="dot dot-live"></span>
-                {% elif has_schedule %}
-                  <span class="dot dot-scheduled"></span>
-                {% else %}
-                  <span class="dot dot-empty"></span>
-                {% endif %}
-                <div>
-                  <h3>{{ room.room_name }}</h3>
-                </div>
-              </div>
-              <div class="chevron">&gt;</div>
-            </div>
+  /* Day selector */
+  .idx-day-select {
+    appearance: none;
+    background: #ffffff18; color: #fff;
+    border: 1.5px solid #ffffff40; border-radius: 10px;
+    padding: 8px 36px 8px 14px; font-size: .88rem; font-weight: 600;
+    cursor: pointer; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    transition: background .15s;
+  }
+  .idx-day-select:hover { background-color: #ffffff28; }
+  .idx-day-select option { background: #1e3a8a; color: #fff; }
 
-            <div class="room-meta">
-              <span class="chip">
-                <span class="chip-icon">ID</span>
-                {{ room.room_code or "-" }}
-              </span>
-              <span class="chip">
-                <span class="chip-icon">CAP</span>
-                {{ room.capacity or "-" }}
-              </span>
-            </div>
+  /* ── BODY SHELL ── */
+  .idx-body { max-width: 960px; margin: -20px auto 0; padding: 0 20px 48px; }
 
-            {% if current %}
-              <div class="room-info">
-                <p class="room-time">{{ current.time_range }}</p>
-                <p class="room-course">{{ current.course_name }}</p>
-                <p class="room-lecturer">{{ current.lecturer_name }}</p>
-              </div>
-            {% elif has_schedule %}
-              <div class="room-info muted">Ada jadwal hari {{ selected_day }}</div>
-            {% else %}
-              <div class="room-info muted">Tidak ada jadwal hari {{ selected_day }}</div>
-            {% endif %}
-          </a>
-        {% else %}
-          <div class="panel">Belum ada ruangan.</div>
-        {% endfor %}
-      </section>
+  /* ── LEGEND ── */
+  .idx-legend {
+    background: #fff; border-radius: 14px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    box-shadow: 0 1px 4px #0000000d;
+    margin-bottom: 20px;
+  }
+  .idx-legend-item { display: flex; align-items: center; gap: 7px; font-size: .8rem; color: #475569; font-weight: 500; }
+  .idx-dot { width: 9px; height: 9px; border-radius: 999px; flex-shrink: 0; }
+  .idx-dot.live      { background: #22c55e; box-shadow: 0 0 0 3px #22c55e30; }
+  .idx-dot.scheduled { background: #3b82f6; }
+  .idx-dot.empty     { background: #cbd5e1; }
+
+  /* ── ROOM GRID ── */
+  .idx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── ROOM CARD ── */
+  .idx-card {
+    background: #fff; border-radius: 16px; padding: 18px 18px 16px;
+    text-decoration: none; color: inherit;
+    box-shadow: 0 1px 3px #0000000a;
+    border: 1.5px solid #e2e8f0;
+    display: flex; flex-direction: column; gap: 12px;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+    position: relative; overflow: hidden;
+  }
+  .idx-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: #e2e8f0;
+    transition: background .2s;
+  }
+  .idx-card.live::before     { background: linear-gradient(90deg,#22c55e,#4ade80); }
+  .idx-card.scheduled::before { background: linear-gradient(90deg,#3b82f6,#60a5fa); }
+  .idx-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px #1e3a8a18;
+    border-color: #bfdbfe;
+  }
+
+  .idx-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .idx-card-title-row { display: flex; align-items: center; gap: 8px; }
+  .idx-card-name { font-weight: 700; font-size: .95rem; color: #0f172a; }
+  .idx-card-chevron { color: #94a3b8; font-size: .9rem; font-weight: 700; }
+
+  .idx-status-badge {
+    font-size: .68rem; font-weight: 700; padding: 3px 8px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .idx-status-badge.live      { background: #dcfce7; color: #15803d; }
+  .idx-status-badge.scheduled { background: #dbeafe; color: #1d4ed8; }
+  .idx-status-badge.empty     { background: #f1f5f9; color: #64748b; }
+
+  .idx-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .idx-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 7px;
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    font-size: .73rem; font-weight: 600; color: #475569;
+  }
+  .idx-chip-lbl { color: #94a3b8; font-weight: 500; }
+
+  .idx-card-info { font-size: .82rem; color: #64748b; }
+  .idx-card-info .time  { font-weight: 700; color: #1e3a8a; font-size: .85rem; }
+  .idx-card-info .course { font-weight: 600; color: #0f172a; margin-top: 3px; }
+  .idx-card-info .lecturer { color: #94a3b8; margin-top: 2px; }
+  .idx-card-info.muted { color: #94a3b8; font-style: italic; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .idx-topbar { padding: 0 16px; }
+    .idx-hero   { padding: 24px 16px 40px; }
+    .idx-hero h1 { font-size: 1.35rem; }
+    .idx-body   { padding: 0 12px 40px; }
+    .idx-grid   { grid-template-columns: 1fr; }
+  }
+</style>
+
+<!-- TOPBAR -->
+<header class="idx-topbar">
+  <a class="idx-brand" href="{{ url_for('main.index') }}">
+    <div class="idx-brand-icon">S</div>
+    <div>
+      <div class="idx-brand-name">SIKARAENG</div>
+      <div class="idx-brand-sub">Sistem Informasi Kegiatan & Ruang</div>
     </div>
-  </section>
+  </a>
+  <nav class="idx-nav">
+    <a href="{{ url_for('main.booking_index') }}">Peminjaman Ruangan</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<div class="idx-hero">
+  <div class="idx-hero-inner">
+    <div>
+      <h1>Pemantauan Ruangan Kelas</h1>
+      <p>Lihat jadwal dan status ruangan kelas hari ini</p>
+    </div>
+    <form method="get">
+      <select name="day" class="idx-day-select" onchange="this.form.submit()">
+        {% for day in days %}
+          <option value="{{ day }}" {% if day == selected_day %}selected{% endif %}>{{ day }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="idx-body">
+
+  <!-- Legend -->
+  <div class="idx-legend">
+    <div class="idx-legend-item"><span class="idx-dot live"></span> Sedang Berlangsung</div>
+    <div class="idx-legend-item"><span class="idx-dot scheduled"></span> Ada Jadwal</div>
+    <div class="idx-legend-item"><span class="idx-dot empty"></span> Kosong</div>
+  </div>
+
+  <!-- Room grid -->
+  <div class="idx-grid">
+    {% for room in rooms %}
+      {% set current    = current_by_room.get(room.id) %}
+      {% set has_sched  = has_schedule_by_room.get(room.id) %}
+
+      {% if current %}
+        {% set card_class = "idx-card live" %}
+        {% set badge_class = "live" %}
+        {% set badge_text = "Berlangsung" %}
+      {% elif has_sched %}
+        {% set card_class = "idx-card scheduled" %}
+        {% set badge_class = "scheduled" %}
+        {% set badge_text = "Ada Jadwal" %}
+      {% else %}
+        {% set card_class = "idx-card" %}
+        {% set badge_class = "empty" %}
+        {% set badge_text = "Kosong" %}
+      {% endif %}
+
+      <a class="{{ card_class }}" href="{{ url_for('main.room_schedule', room_id=room.id, day=selected_day) }}">
+        <div class="idx-card-top">
+          <div>
+            <div class="idx-card-title-row">
+              <span class="idx-card-name">{{ room.room_name }}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="idx-status-badge {{ badge_class }}">{{ badge_text }}</span>
+            <span class="idx-card-chevron">›</span>
+          </div>
+        </div>
+
+        <div class="idx-chips">
+          {% if room.building %}
+            <span class="idx-chip">{{ room.building.building_name }}</span>
+          {% endif %}
+        </div>
+
+        {% if current %}
+          <div class="idx-card-info">
+            <div class="time">{{ current.time_range }}</div>
+            <div class="course">{{ current.course_name }}</div>
+            <div class="lecturer">{{ current.lecturer_name }}</div>
+          </div>
+        {% elif has_sched %}
+          <div class="idx-card-info muted">Ada jadwal hari {{ selected_day }}</div>
+        {% else %}
+          <div class="idx-card-info muted">Tidak ada jadwal hari {{ selected_day }}</div>
+        {% endif %}
+      </a>
+    {% else %}
+      <div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:40px 0;">
+        Belum ada ruangan terdaftar.
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
 {% endblock %}

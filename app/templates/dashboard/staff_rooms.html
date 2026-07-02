@@ -28,6 +28,8 @@
           <tr>
             <th>Kode</th>
             <th>Nama</th>
+            <th>Gedung</th>
+            <th>Lantai</th>
             <th>Tipe</th>
             <th>Kapasitas</th>
             <th>Dapat Dipinjam</th>
@@ -39,6 +41,8 @@
             <tr>
               <td class="cell-code"><strong>{{ room.room_code or "-" }}</strong></td>
               <td class="cell-name">{{ room.room_name }}</td>
+              <td>{{ room.building.building_name if room.building else "-" }}</td>
+              <td>{{ room.floor if room.floor is not none else "-" }}</td>
               <td><span class="badge">{{ room.room_type or "-" }}</span></td>
               <td class="cell-capacity">{{ room.capacity or "-" }}</td>
               <td>
@@ -51,16 +55,26 @@
                 </span>
               </td>
               <td class="cell-actions">
+                <button type="button" class="btn-ghost"
+                  data-edit
+                  data-id="{{ room.id }}"
+                  data-name="{{ room.room_name }}"
+                  data-code="{{ room.room_code or '' }}"
+                  data-building="{{ room.building_id or '' }}"
+                  data-floor="{{ room.floor or '' }}"
+                  data-capacity="{{ room.capacity or '' }}"
+                  data-type="{{ room.room_type or '' }}"
+                  title="Edit"><span class="material-symbols-outlined">edit</span>️</button>
                 <form method="post" class="inline-form" onsubmit="return confirm('Hapus ruangan ini?')">
                   <input type="hidden" name="action" value="delete" />
                   <input type="hidden" name="room_id" value="{{ room.id }}" />
-                  <button type="submit" class="btn-icon-delete" title="Hapus">🗑</button>
+                  <button type="submit" class="btn-icon-delete" title="Hapus"><span class="material-symbols-outlined">delete</span></button>
                 </form>
               </td>
             </tr>
           {% else %}
             <tr>
-              <td colspan="6" class="cell-empty">Belum ada data.</td>
+              <td colspan="8" class="cell-empty">Belum ada data.</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -72,7 +86,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3 id="room-modal-title">Tambah Ruangan</h3>
-        <button type="button" class="btn-ghost" data-modal-close>✕</button>
+        <button type="button" class="btn-ghost" data-modal-close><span class="material-symbols-outlined">close</span></button>
       </div>
       <form method="post" id="room-form">
         <input type="hidden" name="action" value="add" />

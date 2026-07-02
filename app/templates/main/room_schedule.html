@@ -1,88 +1,202 @@
 {% extends "base.html" %}
 
-{% block title %}Detail Ruangan{% endblock %}
+{% block title %}{{ room.room_name }} — SIKARAENG{% endblock %}
 
 {% block content %}
-  <section class="detail-page">
-    <header class="detail-topbar">
-      <a class="back-link" href="{{ url_for('main.index', day=selected_day) }}">&lt;</a>
-      <div>
-        <div class="detail-title">{{ room.room_name }}</div>
-        <div class="detail-subtitle">Detail Ruangan Kelas</div>
-      </div>
-    </header>
+<style>
+  body { background: #f1f5f9; }
 
-    <div class="detail-shell">
-      <section class="room-hero">
-        <div class="room-hero-content">
-          <h1>{{ room.room_name or "-" }}</h1>
-          <p>{{ room.description or "Ruang kelas lantai 1" }}</p>
-          <div class="room-hero-meta">
-            <span class="chip">
-              <span class="chip-icon">🗂</span>
-              {{ room.room_code or "-" }}
-            </span>
-            <span class="chip">
-              <span class="chip-icon">👥</span>
-              Kapasitas {{ room.capacity or "-" }}
-            </span>
-          </div>
-        </div>
-      </section>
+  /* ── TOPBAR ── */
+  .rs-topbar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    height: 60px; padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 12px #1e3a8a33;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .rs-back {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: #ffffffcc;
+    font-size: .88rem; font-weight: 600;
+    padding: 6px 12px; border-radius: 8px;
+    background: #ffffff18; border: 1px solid #ffffff28;
+    transition: background .15s;
+  }
+  .rs-back:hover { background: #ffffff30; color: #fff; }
+  .rs-brand { display: flex; align-items: center; gap: 8px; }
+  .rs-brand-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: #ffffff25; border: 1.5px solid #ffffff40;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: .85rem; color: #fff;
+  }
+  .rs-brand-name { font-weight: 800; color: #fff; font-size: .88rem; }
 
-      <section class="detail-toolbar">
-        <div>
-          <h2>Jadwal Hari {{ selected_day }}</h2>
-        </div>
-        <form method="get" class="day-select-form">
-          <select name="day" onchange="this.form.submit()" class="day-select-input">
-            {% for day in days %}
-              <option value="{{ day }}" {% if day == selected_day %}selected{% endif %}>{{ day }}</option>
-            {% endfor %}
-          </select>
-        </form>
-      </section>
+  /* ── HERO ── */
+  .rs-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 28px 28px 56px; color: #fff;
+  }
+  .rs-hero-inner { max-width: 860px; margin: 0 auto; }
+  .rs-hero h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 6px; }
+  .rs-hero p  { color: #ffffff99; font-size: .88rem; margin: 0 0 16px; }
+  .rs-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .rs-chip {
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 12px; border-radius: 8px;
+    background: #ffffff18; border: 1px solid #ffffff30;
+    font-size: .78rem; font-weight: 600; color: #fff;
+  }
+  .rs-chip-lbl { color: #ffffff80; font-weight: 500; }
 
-      <section class="schedule-list">
-        {% for row in schedule_rows %}
-          {% set sched = row[0] %}
-          {% set lecturer = row[1] %}
-          {% set course = row[2] %}
-          <article class="schedule-card">
-            <div class="schedule-time">
-              <div class="time-icon">⏰</div>
-              <div class="time-content">
-                <div class="time-main">{{ sched.start_time.strftime("%H:%M") if sched.start_time else "-" }}</div>
-                <div class="time-sub">{{ sched.end_time.strftime("%H:%M") if sched.end_time else "-" }}</div>
-              </div>
-            </div>
-            <div class="schedule-info">
-              <h3>{{ course.course_name }}</h3>
-              <div class="schedule-meta">
-                <span class="meta-item">
-                  <span class="meta-icon">#</span>
-                  Kode: {{ course.course_code or "-" }}
-                </span>
-              </div>
-            </div>
-            <div class="schedule-lecturer">
-              <div class="schedule-meta">
-                <span class="meta-icon">👨‍🏫</span>
-                {{ lecturer.lecturer_name }}
-              </div>
-              <div class="schedule-meta">
-                <span class="meta-icon">📍</span>
-                {{ room.room_code or "-" }}
-              </div>
-            </div>
-          </article>
-        {% else %}
-          <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <p>Belum ada jadwal untuk hari {{ selected_day }}.</p>
-          </div>
-        {% endfor %}
-      </section>
+  /* ── BODY ── */
+  .rs-body { max-width: 860px; margin: -22px auto 0; padding: 0 20px 48px; }
+
+  /* ── TOOLBAR ── */
+  .rs-toolbar {
+    background: #fff; border-radius: 14px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 1px 4px #0000000d; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .rs-toolbar-title { font-weight: 700; font-size: 1rem; color: #0f172a; }
+  .rs-toolbar-sub   { font-size: .78rem; color: #64748b; margin-top: 2px; }
+  .rs-day-select {
+    appearance: none;
+    background: #f8fafc; color: #0f172a;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    padding: 7px 34px 7px 12px; font-size: .85rem; font-weight: 600;
+    cursor: pointer; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    transition: border-color .15s;
+  }
+  .rs-day-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #3b82f620; }
+
+  /* ── SCHEDULE CARDS ── */
+  .rs-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .rs-card {
+    background: #fff; border-radius: 14px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 1px 3px #0000000a;
+    border: 1.5px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .rs-card:hover { transform: translateX(3px); box-shadow: 0 4px 16px #1e3a8a14; }
+
+  .rs-time-col {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 56px; text-align: center;
+  }
+  .rs-time-start { font-size: 1rem; font-weight: 800; color: #1e3a8a; line-height: 1; }
+  .rs-time-sep   { font-size: .65rem; color: #cbd5e1; margin: 2px 0; }
+  .rs-time-end   { font-size: .82rem; font-weight: 600; color: #64748b; }
+
+  .rs-divider {
+    width: 1px; align-self: stretch;
+    background: linear-gradient(to bottom, transparent, #e2e8f0, transparent);
+    flex-shrink: 0;
+  }
+
+  .rs-info { flex: 1; min-width: 0; }
+  .rs-course { font-weight: 700; font-size: .92rem; color: #0f172a; }
+  .rs-code   { font-size: .75rem; color: #94a3b8; margin-top: 2px; }
+  .rs-meta   { display: flex; align-items: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+  .rs-meta-item { display: flex; align-items: center; gap: 5px; font-size: .78rem; color: #475569; }
+
+  /* ── Empty state ── */
+  .rs-empty {
+    background: #fff; border-radius: 14px; padding: 48px 20px;
+    text-align: center; color: #94a3b8;
+    box-shadow: 0 1px 3px #0000000a; border: 1.5px solid #e2e8f0;
+  }
+  .rs-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .rs-empty p { font-size: .88rem; }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .rs-topbar { padding: 0 14px; }
+    .rs-hero   { padding: 20px 14px 44px; }
+    .rs-hero h1 { font-size: 1.3rem; }
+    .rs-body   { padding: 0 10px 40px; }
+    .rs-card   { flex-wrap: wrap; }
+    .rs-time-col { flex-direction: row; gap: 4px; min-width: auto; }
+    .rs-time-sep { display: none; }
+  }
+</style>
+
+<!-- TOPBAR -->
+<header class="rs-topbar">
+  <a class="rs-back" href="{{ url_for('main.index', day=selected_day) }}">← Kembali</a>
+  <div class="rs-brand">
+    <div class="rs-brand-icon">S</div>
+    <div class="rs-brand-name">SIKARAENG</div>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="rs-hero">
+  <div class="rs-hero-inner">
+    <h1>{{ room.room_name }}</h1>
+    <p>{{ room.description or "Ruangan kelas" }}</p>
+    <div class="rs-chips">
+      <span class="rs-chip"><span class="rs-chip-lbl">ID</span> {{ room.room_code or "-" }}</span>
+      <span class="rs-chip"><span class="rs-chip-lbl">CAP</span> {{ room.capacity or "-" }} orang</span>
+      {% if room.room_type %}
+        <span class="rs-chip">{{ room.room_type }}</span>
+      {% endif %}
     </div>
-  </section>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="rs-body">
+
+  <!-- Toolbar -->
+  <div class="rs-toolbar">
+    <div>
+      <div class="rs-toolbar-title">Jadwal Hari {{ selected_day }}</div>
+      <div class="rs-toolbar-sub">{{ schedule_rows | length }} sesi terjadwal</div>
+    </div>
+    <form method="get">
+      <select name="day" class="rs-day-select" onchange="this.form.submit()">
+        {% for day in days %}
+          <option value="{{ day }}" {% if day == selected_day %}selected{% endif %}>{{ day }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <!-- Schedule list -->
+  <div class="rs-list">
+    {% for row in schedule_rows %}
+      {% set sched  = row[0] %}
+      {% set course = row[1] %}
+      <div class="rs-card">
+        <div class="rs-time-col">
+          <span class="rs-time-start">{{ sched.start_time.strftime("%H:%M") if sched.start_time else "-" }}</span>
+          <span class="rs-time-sep">▼</span>
+          <span class="rs-time-end">{{ sched.end_time.strftime("%H:%M") if sched.end_time else "-" }}</span>
+        </div>
+        <div class="rs-divider"></div>
+        <div class="rs-info">
+          <div class="rs-course">{{ course.course_name }}</div>
+          <div class="rs-code">{{ course.course_code or "" }}</div>
+          <div class="rs-meta">
+            <span class="rs-meta-item"><span class="material-symbols-outlined">school</span> {{ sched.lecturers | map(attribute='lecturer_name') | join(', ') or '-' }}</span>
+            <span class="rs-meta-item"><span class="material-symbols-outlined">location_on</span> {{ room.room_code or "-" }}</span>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="rs-empty">
+        <div class="rs-empty-icon"><span class="material-symbols-outlined">content_paste</span></div>
+        <p>Tidak ada jadwal untuk hari <strong>{{ selected_day }}</strong>.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
 {% endblock %}
+
