@@ -17,27 +17,40 @@ depends_on = None
 
 
 def upgrade():
-    # Drop FK constraints dulu sebelum drop column (wajib di MySQL)
-    # Cari nama constraint secara dinamis dari information_schema agar tidak
-    # bergantung pada nama yang di-auto-generate MySQL.
     conn = op.get_bind()
+
+    # Cek kolom yang sudah ada di class_schedules (MySQL DDL tidak bisa rollback,
+    # jadi mungkin sebagian kolom sudah ditambahkan dari attempt sebelumnya)
+    result = conn.execute(sa.text(
+        "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'class_schedules'"
+    ))
+    existing_cols = {row[0] for row in result}
+
+    # Drop FK constraints pada kolom yang akan dihapus (wajib di MySQL)
     for col in ('time_slot_id', 'day_id'):
-        result = conn.execute(sa.text(
-            "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE "
-            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'class_schedules' "
-            f"AND COLUMN_NAME = '{col}' AND REFERENCED_TABLE_NAME IS NOT NULL"
-        ))
-        for row in result:
-            conn.execute(sa.text(
-                f"ALTER TABLE class_schedules DROP FOREIGN KEY `{row[0]}`"
+        if col in existing_cols:
+            fk_result = conn.execute(sa.text(
+                "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'class_schedules' "
+                f"AND COLUMN_NAME = '{col}' AND REFERENCED_TABLE_NAME IS NOT NULL"
             ))
+            for row in fk_result:
+                conn.execute(sa.text(
+                    f"ALTER TABLE class_schedules DROP FOREIGN KEY `{row[0]}`"
+                ))
 
     with op.batch_alter_table('class_schedules', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('schedule_date', sa.Date(), nullable=True))
-        batch_op.add_column(sa.Column('start_time', sa.Time(), nullable=True))
-        batch_op.add_column(sa.Column('end_time', sa.Time(), nullable=True))
-        batch_op.drop_column('time_slot_id')
-        batch_op.drop_column('day_id')
+        if 'schedule_date' not in existing_cols:
+            batch_op.add_column(sa.Column('schedule_date', sa.Date(), nullable=True))
+        if 'start_time' not in existing_cols:
+            batch_op.add_column(sa.Column('start_time', sa.Time(), nullable=True))
+        if 'end_time' not in existing_cols:
+            batch_op.add_column(sa.Column('end_time', sa.Time(), nullable=True))
+        if 'time_slot_id' in existing_cols:
+            batch_op.drop_column('time_slot_id')
+        if 'day_id' in existing_cols:
+            batch_op.drop_column('day_id')
 
 
 def downgrade():
