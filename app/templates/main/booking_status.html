@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Status Pengajuan — SIKARAENG{% endblock %}
+
+{% block content %}
+<style>
+  body { background: #f1f5f9; }
+
+  .st-topbar {
+    background: linear-gradient(135deg, #1e3a8a 0%, #be123c 100%);
+    padding: 0 24px; display: flex; align-items: center;
+    justify-content: space-between; height: 56px;
+  }
+  .st-brand { color: #fff; font-weight: 800; font-size: .95rem; text-decoration: none; }
+  .st-back {
+    color: #ffffffcc; font-size: .82rem; font-weight: 600;
+    text-decoration: none; display: flex; align-items: center; gap: 4px;
+  }
+  .st-back:hover { color: #fff; }
+
+  .st-wrap {
+    max-width: 640px; margin: 32px auto 48px; padding: 0 16px;
+  }
+
+  /* ── Status banner ── */
+  .st-banner {
+    border-radius: 18px; padding: 28px 24px; text-align: center;
+    margin-bottom: 24px;
+  }
+  .st-banner.menunggu { background: #fffbeb; border: 1.5px solid #fde68a; }
+  .st-banner.disetujui { background: #f0fdf4; border: 1.5px solid #86efac; }
+  .st-banner.ditolak { background: #fef2f2; border: 1.5px solid #fca5a5; }
+
+  .st-icon { font-size: 3rem; margin-bottom: 8px; }
+  .st-status-label { font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: #64748b; margin-bottom: 4px; }
+  .st-status-value { font-size: 1.4rem; font-weight: 800; }
+  .st-banner.menunggu .st-status-value { color: #b45309; }
+  .st-banner.disetujui .st-status-value { color: #15803d; }
+  .st-banner.ditolak .st-status-value { color: #b91c1c; }
+
+  .st-progress {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-top: 20px; flex-wrap: nowrap; overflow-x: auto;
+  }
+  .st-step {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0;
+  }
+  .st-step-dot {
+    width: 28px; height: 28px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 700;
+  }
+  .st-step-dot.done { background: #22c55e; color: #fff; }
+  .st-step-dot.active { background: #3b82f6; color: #fff; box-shadow: 0 0 0 3px #bfdbfe; }
+  .st-step-dot.pending { background: #e2e8f0; color: #94a3b8; }
+  .st-step-dot.rejected { background: #ef4444; color: #fff; }
+  .st-step-label { font-size: .6rem; color: #64748b; margin-top: 4px; text-align: center; max-width: 52px; }
+  .st-connector { width: 28px; height: 2px; background: #e2e8f0; flex-shrink: 0; margin-bottom: 18px; }
+  .st-connector.done { background: #22c55e; }
+
+  /* ── Info card ── */
+  .st-card {
+    background: #fff; border-radius: 16px; padding: 20px 24px;
+    border: 1.5px solid #e2e8f0; margin-bottom: 16px;
+  }
+  .st-card h3 { font-size: .8rem; font-weight: 700; color: #64748b;
+    text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; }
+  .st-row { display: flex; gap: 8px; padding: 6px 0;
+    border-bottom: 1px solid #f1f5f9; font-size: .88rem; }
+  .st-row:last-child { border-bottom: none; }
+  .st-key { color: #94a3b8; min-width: 140px; font-weight: 500; }
+  .st-val { color: #0f172a; font-weight: 600; }
+
+  /* ── Token box ── */
+  .st-token-box {
+    background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px;
+    padding: 14px 18px; display: flex; align-items: center; gap: 10px;
+    margin-top: 4px; flex-wrap: wrap;
+  }
+  .st-token-url { font-size: .78rem; color: #3b82f6; word-break: break-all; flex: 1; }
+  .st-copy-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 8px; border: 1.5px solid #bfdbfe;
+    background: #eff6ff; color: #1d4ed8; font-size: .78rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .st-copy-btn:hover { background: #dbeafe; }
+
+  /* ── Rejection box ── */
+  .st-reject-box {
+    background: #fef2f2; border: 1.5px solid #fca5a5; border-radius: 12px;
+    padding: 14px 18px; margin-top: 12px; font-size: .88rem; color: #b91c1c;
+  }
+  .st-reject-box strong { display: block; margin-bottom: 4px; }
+</style>
+
+<!-- Topbar -->
+<header class="st-topbar">
+  <a class="st-brand" href="{{ url_for('main.index') }}">SIKARAENG</a>
+  <a class="st-back" href="{{ url_for('main.booking_index') }}">
+    <span class="material-symbols-outlined" style="font-size:1rem;">arrow_back</span> Kembali
+  </a>
+</header>
+
+<div class="st-wrap">
+
+  {% set s = booking.status or "Menunggu Staff" %}
+  {% set is_approved = (s == "Disetujui") %}
+  {% set is_rejected = (s == "Ditolak") %}
+
+  <!-- Status Banner -->
+  <div class="st-banner {{ 'disetujui' if is_approved else ('ditolak' if is_rejected else 'menunggu') }}">
+    <div class="st-icon">
+      {% if is_approved %}✅
+      {% elif is_rejected %}❌
+      {% else %}⏳{% endif %}
+    </div>
+    <div class="st-status-label">Status Pengajuan</div>
+    <div class="st-status-value">{{ s }}</div>
+
+    {% if is_rejected and booking.rejection_note %}
+      <div class="st-reject-box" style="margin-top:16px;text-align:left;">
+        <strong>Alasan Penolakan:</strong>
+        {{ booking.rejection_note }}
+      </div>
+    {% endif %}
+
+    <!-- Progress bar -->
+    {% set stages = [
+      ("Menunggu Staff",   "Staff"),
+      ("Menunggu Kasubag", "Kasubag"),
+      ("Menunggu KTU",     "KTU"),
+      ("Menunggu WD2",     "WD2"),
+      ("Menunggu Dekan",   "Dekan"),
+      ("Disetujui",        "Selesai"),
+    ] %}
+    {% set order = stages | map(attribute=0) | list %}
+    {% set cur_idx = order.index(s) if s in order else (5 if is_approved else 0) %}
+
+    <div class="st-progress" style="margin-top:24px;">
+      {% for stage_val, stage_label in stages %}
+        {% set idx = loop.index0 %}
+        {% if is_rejected %}
+          {% set dot_class = "rejected" if s == stage_val else ("done" if idx < cur_idx else "pending") %}
+        {% else %}
+          {% set dot_class = "done" if idx < cur_idx else ("active" if idx == cur_idx else "pending") %}
+        {% endif %}
+        <div class="st-step">
+          <div class="st-step-dot {{ dot_class }}">
+            {% if dot_class == "done" %}✓
+            {% elif dot_class == "rejected" %}✕
+            {% else %}{{ idx + 1 }}{% endif %}
+          </div>
+          <div class="st-step-label">{{ stage_label }}</div>
+        </div>
+        {% if not loop.last %}
+          <div class="st-connector {{ 'done' if idx < cur_idx - 1 else '' }}"></div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Detail Peminjaman -->
+  <div class="st-card">
+    <h3>Detail Peminjaman</h3>
+    <div class="st-row"><span class="st-key">Ruangan</span><span class="st-val">{{ booking.room.room_name if booking.room else "-" }}</span></div>
+    <div class="st-row"><span class="st-key">Tanggal</span><span class="st-val">{{ booking.booking_date.strftime("%d %B %Y") if booking.booking_date else "-" }}</span></div>
+    <div class="st-row"><span class="st-key">Waktu</span><span class="st-val">
+      {% if booking.start_time and booking.end_time %}
+        {{ booking.start_time.strftime("%H:%M") }} – {{ booking.end_time.strftime("%H:%M") }}
+      {% else %}-{% endif %}
+    </span></div>
+    <div class="st-row"><span class="st-key">Tujuan</span><span class="st-val">{{ booking.purpose or "-" }}</span></div>
+    <div class="st-row"><span class="st-key">Tanggal Pengajuan</span><span class="st-val">{{ booking.submission_date.strftime("%d %B %Y") if booking.submission_date else "-" }}</span></div>
+  </div>
+
+  <!-- Data Peminjam -->
+  <div class="st-card">
+    <h3>Data Peminjam</h3>
+    <div class="st-row"><span class="st-key">Nama</span><span class="st-val">{{ booking.display_name }}</span></div>
+    <div class="st-row"><span class="st-key">Organisasi</span><span class="st-val">{{ booking.organization or "-" }}</span></div>
+    <div class="st-row"><span class="st-key">No. Telepon</span><span class="st-val">{{ booking.phone_number or "-" }}</span></div>
+    <div class="st-row"><span class="st-key">Email</span><span class="st-val">{{ booking.borrower_email or "-" }}</span></div>
+  </div>
+
+  <!-- Link Cek Status -->
+  <div class="st-card">
+    <h3>Link Status Pengajuan Anda</h3>
+    <p style="font-size:.84rem;color:#64748b;margin:0 0 10px;">
+      Simpan link ini untuk memantau status pengajuan kapan saja tanpa perlu login.
+    </p>
+    {% set status_url = request.host_url.rstrip('/') + url_for('main.booking_status', token=booking.token) %}
+    <div class="st-token-box">
+      <span class="st-token-url" id="status-url">{{ status_url }}</span>
+      <button class="st-copy-btn" onclick="copyUrl()">
+        <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Salin
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function copyUrl() {
+    const url = document.getElementById('status-url').textContent.trim();
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.st-copy-btn');
+      btn.textContent = '✓ Tersalin!';
+      setTimeout(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Salin';
+      }, 2000);
+    });
+  }
+</script>
+{% endblock %}

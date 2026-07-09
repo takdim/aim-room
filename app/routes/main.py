@@ -250,12 +250,7 @@ def room_booking(room_id: int):
             )
             db.session.add(booking)
             db.session.commit()
-            flash(
-                "Pengajuan berhasil dikirim! Staff akan memeriksa dokumen Anda. "
-                "Tunggu konfirmasi via email atau WhatsApp.",
-                "info",
-            )
-            return redirect(url_for("main.booking_index"))
+            return redirect(url_for("main.booking_status", token=booking.token))
 
     return render_template(
         "main/booking_form.html",
@@ -358,12 +353,7 @@ def event_booking(room_id: int):
             )
             db.session.add(booking)
             db.session.commit()
-            flash(
-                "Pengajuan event berhasil dikirim! Staff akan memeriksa dokumen Anda. "
-                "Tunggu konfirmasi via email atau WhatsApp.",
-                "info",
-            )
-            return redirect(url_for("main.booking_index"))
+            return redirect(url_for("main.booking_status", token=booking.token))
 
     return render_template(
         "main/event_booking_form.html",
@@ -373,6 +363,12 @@ def event_booking(room_id: int):
         time_slots=EVENT_TIME_SLOTS,
         error=error,
     )
+
+
+@main_bp.get("/booking/status/<token>")
+def booking_status(token: str):
+    booking = RoomBooking.query.filter_by(token=token).first_or_404()
+    return render_template("main/booking_status.html", booking=booking)
 
 
 @main_bp.get("/daftar-peminjaman")

@@ -1,6 +1,11 @@
 import datetime as dt
+import uuid
 
 from app.extensions import db
+
+
+def _gen_token():
+    return uuid.uuid4().hex
 
 
 class RoomBooking(db.Model):
@@ -10,6 +15,9 @@ class RoomBooking(db.Model):
 
     room_id = db.Column(db.Integer, db.ForeignKey("rooms.id"))
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+    # Unique token for public status page
+    token = db.Column(db.String(32), unique=True, nullable=True, default=_gen_token)
 
     # Booking type: "regular" (hari kerja biasa) or "event" (event besar/hari libur)
     booking_type = db.Column(db.String(20), nullable=False, default="regular")
