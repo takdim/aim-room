@@ -78,18 +78,38 @@
           </div>
 
           <div style="grid-column:1/-1;">
-            <h4 style="color:#4a5568;margin-bottom:.8rem;">Tindakan Anda ({{ role|upper }})</h4>
-            <form method="post" action="{{ url_for('approval.approval_action', booking_id=booking.id) }}" style="display:flex;flex-direction:column;gap:.7rem;max-width:480px;">
-              <div class="field">
-                <label for="rejection_note">Catatan Penolakan (isi jika menolak):</label>
-                <textarea id="rejection_note" name="rejection_note" rows="2" style="width:100%;padding:.5rem;border:1px solid #e2e8f0;border-radius:6px;"></textarea>
+            {% if booking.status == my_status %}
+              <h4 style="color:#4a5568;margin-bottom:.8rem;">Tindakan Anda ({{ role|upper }})</h4>
+              <form method="post" action="{{ url_for('approval.approval_action', booking_id=booking.id) }}" style="display:flex;flex-direction:column;gap:.7rem;max-width:480px;">
+                <div class="field">
+                  <label for="rejection_note">Catatan Penolakan (isi jika menolak):</label>
+                  <textarea id="rejection_note" name="rejection_note" rows="2" style="width:100%;padding:.5rem;border:1px solid #e2e8f0;border-radius:6px;"></textarea>
+                </div>
+                <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+                  <button type="submit" name="action" value="approve" class="primary"><span class="material-symbols-outlined">check</span> Setujui & Teruskan</button>
+                  <button type="submit" name="action" value="reject" class="btn-ghost" style="color:#e53e3e;"
+                          onclick="return confirm('Tolak pengajuan ini?')"><span class="material-symbols-outlined">close</span> Tolak</button>
+                </div>
+              </form>
+            {% elif booking.status == "Ditolak" %}
+              <div style="background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;padding:.8rem 1rem;">
+                <strong style="color:#e53e3e;">Ditolak oleh {{ booking.rejected_by|upper or "-" }}</strong>
+                {% if booking.rejection_note %}
+                  <p style="margin:.3rem 0 0;font-size:.9rem;">{{ booking.rejection_note }}</p>
+                {% else %}
+                  <p style="margin:.3rem 0 0;font-size:.9rem;color:#718096;"><em>Tidak ada catatan penolakan.</em></p>
+                {% endif %}
               </div>
-              <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
-                <button type="submit" name="action" value="approve" class="primary"><span class="material-symbols-outlined">check</span> Setujui & Teruskan</button>
-                <button type="submit" name="action" value="reject" class="btn-ghost" style="color:#e53e3e;"
-                        onclick="return confirm('Tolak pengajuan ini?')"><span class="material-symbols-outlined">close</span> Tolak</button>
+            {% elif booking.status == "Disetujui" %}
+              <div style="background:#f0fff4;border:1px solid #9ae6b4;border-radius:8px;padding:.8rem 1rem;">
+                <strong style="color:#276749;"><span class="material-symbols-outlined" style="vertical-align:middle;font-size:1rem;">check_circle</span> Peminjaman telah disetujui.</strong>
               </div>
-            </form>
+            {% else %}
+              <div style="background:#fffbeb;border:1px solid #fbd38d;border-radius:8px;padding:.8rem 1rem;">
+                <strong style="color:#744210;">Pengajuan ini sedang di tahap: {{ booking.status }}</strong>
+                <p style="margin:.3rem 0 0;font-size:.9rem;color:#718096;">Bukan giliran Anda untuk menindaklanjuti.</p>
+              </div>
+            {% endif %}
           </div>
         </div>
       </section>

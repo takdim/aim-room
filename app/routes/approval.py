@@ -74,10 +74,12 @@ def approval_home():
 def approval_detail(booking_id: int):
     role = session.get("role")
     booking = RoomBooking.query.get_or_404(booking_id)
+    my_status = ROLE_STATUS_MAP.get(role)
     return render_template(
         "approval/detail.html",
         booking=booking,
         role=role,
+        my_status=my_status,
         full_name=session.get("full_name"),
     )
 

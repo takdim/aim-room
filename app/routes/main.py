@@ -228,6 +228,21 @@ def room_booking(room_id: int):
                 error = "Format tanggal atau waktu tidak valid."
 
         if not error:
+            conflict = RoomBooking.query.filter(
+                RoomBooking.room_id == room.id,
+                RoomBooking.booking_date == parsed_date,
+                RoomBooking.status != "Ditolak",
+                RoomBooking.start_time < parsed_end,
+                RoomBooking.end_time > parsed_start,
+            ).first()
+            if conflict:
+                error = (
+                    f"Ruangan sudah dipesan pada {parsed_date.strftime('%d %B %Y')} "
+                    f"pukul {conflict.start_time.strftime('%H:%M')}–{conflict.end_time.strftime('%H:%M')}. "
+                    "Silakan pilih waktu lain."
+                )
+
+        if not error:
             pakta_path = _save_upload(pakta_file, "pakta")
             surat_path = _save_upload(surat_file, "surat")
             booking = RoomBooking(
@@ -329,6 +344,21 @@ def event_booking(room_id: int):
             parsed_end = _parse_time(end_time)
             if not (parsed_date and parsed_start and parsed_end):
                 error = "Format tanggal atau waktu tidak valid."
+
+        if not error:
+            conflict = RoomBooking.query.filter(
+                RoomBooking.room_id == room.id,
+                RoomBooking.booking_date == parsed_date,
+                RoomBooking.status != "Ditolak",
+                RoomBooking.start_time < parsed_end,
+                RoomBooking.end_time > parsed_start,
+            ).first()
+            if conflict:
+                error = (
+                    f"Ruangan sudah dipesan pada {parsed_date.strftime('%d %B %Y')} "
+                    f"pukul {conflict.start_time.strftime('%H:%M')}–{conflict.end_time.strftime('%H:%M')}. "
+                    "Silakan pilih waktu lain."
+                )
 
         if not error:
             pakta_path = _save_upload(pakta_file, "pakta")

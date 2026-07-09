@@ -125,6 +125,11 @@
               <textarea id="staff_note" name="staff_note" rows="2" style="width:100%;padding:.5rem;border:1px solid #e2e8f0;border-radius:6px;">{{ booking.staff_note or "" }}</textarea>
             </div>
 
+            <div style="margin-bottom:.8rem;">
+              <label for="rejection_note" style="display:block;margin-bottom:.3rem;font-size:.9rem;">Alasan Penolakan (isi jika menolak):</label>
+              <textarea id="rejection_note" name="rejection_note" rows="2" style="width:100%;padding:.5rem;border:1px solid #e2e8f0;border-radius:6px;"></textarea>
+            </div>
+
             <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
               <button type="submit" name="action" value="forward" class="primary">
                 <span class="material-symbols-outlined">check</span> Teruskan ke Kasubag
@@ -136,11 +141,15 @@
             </div>
           </form>
         </div>
-      {% elif booking.rejection_note %}
+      {% elif booking.status == "Ditolak" %}
         <div class="detail-section" style="grid-column:1/-1;">
           <div style="background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;padding:.8rem 1rem;">
             <strong style="color:#e53e3e;">Ditolak oleh {{ booking.rejected_by or "-" }}</strong>
-            <p style="margin:.3rem 0 0;font-size:.9rem;">{{ booking.rejection_note }}</p>
+            {% if booking.rejection_note %}
+              <p style="margin:.3rem 0 0;font-size:.9rem;">{{ booking.rejection_note }}</p>
+            {% else %}
+              <p style="margin:.3rem 0 0;font-size:.9rem;color:#718096;"><em>Tidak ada catatan penolakan.</em></p>
+            {% endif %}
           </div>
         </div>
       {% endif %}
