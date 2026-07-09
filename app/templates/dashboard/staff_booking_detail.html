@@ -54,7 +54,20 @@
         </table>
       </div>
 
-      {% if booking.booking_type == "event" %}
+      {% if booking.token %}
+        <div class="detail-section" style="grid-column:1/-1;">
+          <h4 style="margin-bottom:.6rem;color:#4a5568;">Link Status Peminjam</h4>
+          {% set status_url = request.host_url.rstrip('/') + url_for('main.booking_status', token=booking.token) %}
+          <div style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:.7rem 1rem;flex-wrap:wrap;">
+            <span class="material-symbols-outlined" style="color:#3b82f6;font-size:1.1rem;">link</span>
+            <a href="{{ status_url }}" target="_blank" style="color:#3b82f6;font-size:.82rem;word-break:break-all;flex:1;">{{ status_url }}</a>
+            <button onclick="navigator.clipboard.writeText('{{ status_url }}');this.textContent='✓ Tersalin!';setTimeout(()=>this.textContent='Salin',2000)"
+                    style="padding:4px 12px;border-radius:7px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+              Salin
+            </button>
+          </div>
+        </div>
+      {% endif %}
         <div class="detail-section" style="grid-column:1/-1;">
           <h4 style="margin-bottom:.8rem;color:#4a5568;">File Dokumen Yang Diunggah</h4>
           <div style="display:flex;gap:1rem;flex-wrap:wrap;">
