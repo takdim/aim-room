@@ -169,6 +169,42 @@
   .role-wd2      { background: #faf5ff; color: #7c3aed; }
   .role-dekan    { background: #fff1f2; color: #be123c; }
 
+  /* ── Icon buttons ── */
+  .adm-icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+    background: #fff; color: #374151; cursor: pointer; font-size: .9rem;
+    transition: background .12s, border-color .12s;
+  }
+  .adm-icon-btn:hover { background: #f1f5f9; border-color: #cbd5e1; }
+  .adm-icon-btn.danger { border-color: #fecaca; color: #dc2626; background: #fff5f5; }
+  .adm-icon-btn.danger:hover { background: #fee2e2; }
+
+  /* ── Modal ── */
+  .adm-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: #00000050; z-index: 200;
+  }
+  .adm-modal {
+    display: none; position: fixed;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #fff; border-radius: 18px; padding: 24px;
+    width: min(440px, 94vw); z-index: 201;
+    box-shadow: 0 8px 32px #0000002a;
+  }
+  .adm-modal-overlay.open,
+  .adm-modal.open { display: block; }
+  .adm-modal-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1rem; font-weight: 700; color: #0f172a;
+    margin-bottom: 18px;
+  }
+  .adm-modal-close {
+    margin-left: auto; background: none; border: none;
+    cursor: pointer; color: #94a3b8; display: flex; align-items: center;
+  }
+  .adm-modal-close:hover { color: #374151; }
+
   /* avatar colours */
   .ava-staff    { background: linear-gradient(135deg,#3b82f6,#60a5fa); }
   .ava-kasubag  { background: linear-gradient(135deg,#22c55e,#4ade80); }
@@ -387,6 +423,20 @@
                   <div class="adm-user-email">{{ u.email }}</div>
                 </div>
                 <span class="adm-role-badge role-{{ u.role }}">{{ u.role }}</span>
+                <div style="display:flex;gap:4px;margin-left:8px;">
+                  <button class="adm-icon-btn"
+                    onclick="openEditModal({{ u.id }}, '{{ u.full_name|e }}', '{{ u.email|e }}', '{{ u.role }}')"
+                    title="Edit">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <form method="post" style="display:inline;" onsubmit="return confirm('Hapus akun {{ u.full_name|e }}?')">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="user_id" value="{{ u.id }}" />
+                    <button type="submit" class="adm-icon-btn danger" title="Hapus">
+                      <span class="material-symbols-outlined">delete</span>
+                    </button>
+                  </form>
+                </div>
               </div>
             {% endfor %}
           </div>
@@ -399,6 +449,45 @@
 
     </div>
   </main>
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div id="edit-overlay" class="adm-modal-overlay" onclick="closeEditModal()"></div>
+<div id="edit-modal" class="adm-modal">
+  <div class="adm-modal-header">
+    <span class="material-symbols-outlined">edit</span>
+    <span>Edit Akun</span>
+    <button onclick="closeEditModal()" class="adm-modal-close"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <form method="post">
+    <input type="hidden" name="action" value="update" />
+    <input type="hidden" name="user_id" id="edit-user-id" />
+    <div class="adm-field">
+      <label>Nama Lengkap</label>
+      <input id="edit-full-name" name="full_name" type="text" required />
+    </div>
+    <div class="adm-field">
+      <label>Email</label>
+      <input id="edit-email" name="email" type="email" required />
+    </div>
+    <div class="adm-field">
+      <label>Role</label>
+      <select id="edit-role" name="role">
+        {% for r in roles %}
+          <option value="{{ r }}">{{ r | title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="adm-field">
+      <label>Password Baru <span style="font-weight:400;color:#94a3b8;">(kosongkan jika tidak diubah)</span></label>
+      <input name="password" type="password" placeholder="Min. 6 karakter" />
+    </div>
+    <div class="adm-field">
+      <label>Konfirmasi Password Baru</label>
+      <input name="confirm_password" type="password" placeholder="Ulangi password baru" />
+    </div>
+    <button type="submit" class="adm-btn">Simpan Perubahan</button>
+  </form>
 </div>
 
 <script>
@@ -414,5 +503,25 @@
 
   // Close menu when a nav link is clicked on mobile
   sidebar.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+  // ── Edit Modal ──
+  const editOverlay = document.getElementById('edit-overlay');
+  const editModal   = document.getElementById('edit-modal');
+
+  function openEditModal(id, name, email, role) {
+    document.getElementById('edit-user-id').value = id;
+    document.getElementById('edit-full-name').value = name;
+    document.getElementById('edit-email').value = email;
+    document.getElementById('edit-role').value = role;
+    editOverlay.classList.add('open');
+    editModal.classList.add('open');
+  }
+
+  function closeEditModal() {
+    editOverlay.classList.remove('open');
+    editModal.classList.remove('open');
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
 </script>
 {% endblock %}

@@ -78,6 +78,63 @@ def _get_selected_semester():
 @role_required("admin")
 def admin_home():
     if request.method == "POST":
+        action = request.form.get("action", "create")
+
+        # ── DELETE ──────────────────────────────────────────────
+        if action == "delete":
+            user_id = request.form.get("user_id", "").strip()
+            user = User.query.get(int(user_id)) if user_id else None
+            if user and user.role != "admin":
+                db.session.delete(user)
+                db.session.commit()
+                flash("Akun berhasil dihapus.", "info")
+            else:
+                flash("Akun tidak ditemukan atau tidak dapat dihapus.", "error")
+            return redirect(url_for("dashboard.admin_home"))
+
+        # ── UPDATE ──────────────────────────────────────────────
+        if action == "update":
+            user_id = request.form.get("user_id", "").strip()
+            user = User.query.get(int(user_id)) if user_id else None
+            if not user or user.role == "admin":
+                flash("Akun tidak ditemukan.", "error")
+                return redirect(url_for("dashboard.admin_home"))
+
+            full_name = request.form.get("full_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            role = request.form.get("role", user.role).strip()
+            new_password = request.form.get("password", "").strip()
+            confirm_password = request.form.get("confirm_password", "").strip()
+
+            if not full_name or not email:
+                flash("Nama dan email wajib diisi.", "error")
+                return redirect(url_for("dashboard.admin_home"))
+
+            if role not in ROLES or role == "admin":
+                role = "staff"
+
+            conflict = User.query.filter(User.email == email, User.id != user.id).first()
+            if conflict:
+                flash("Email sudah digunakan akun lain.", "error")
+                return redirect(url_for("dashboard.admin_home"))
+
+            if new_password:
+                if new_password != confirm_password:
+                    flash("Konfirmasi password tidak cocok.", "error")
+                    return redirect(url_for("dashboard.admin_home"))
+                if len(new_password) < 6:
+                    flash("Password minimal 6 karakter.", "error")
+                    return redirect(url_for("dashboard.admin_home"))
+                user.set_password(new_password)
+
+            user.full_name = full_name
+            user.email = email
+            user.role = role
+            db.session.commit()
+            flash("Akun berhasil diperbarui.", "info")
+            return redirect(url_for("dashboard.admin_home"))
+
+        # ── CREATE (default) ────────────────────────────────────
         full_name = request.form.get("full_name", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -88,6 +145,10 @@ def admin_home():
             flash("Nama, email, dan password wajib diisi.", "error")
             return redirect(url_for("dashboard.admin_home"))
 
+        if len(password) < 6:
+            flash("Password minimal 6 karakter.", "error")
+            return redirect(url_for("dashboard.admin_home"))
+
         if password != confirm_password:
             flash("Konfirmasi password tidak cocok.", "error")
             return redirect(url_for("dashboard.admin_home"))
@@ -95,8 +156,7 @@ def admin_home():
         if role not in ROLES or role == "admin":
             role = "staff"
 
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
+        if User.query.filter_by(email=email).first():
             flash("Email sudah digunakan.", "error")
             return redirect(url_for("dashboard.admin_home"))
 
