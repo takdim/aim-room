@@ -71,8 +71,8 @@
           <div style="grid-column:1/-1;">
             <h4 style="color:#4a5568;margin-bottom:.6rem;">Hasil Verifikasi Staff</h4>
             <ul style="font-size:.9rem;line-height:1.8;">
-              <li>Mahasiswa FIB: {{ "<span class="material-symbols-outlined">check_circle</span> Ya" if booking.is_fib_student else "<span class="material-symbols-outlined">cancel</span> Tidak / Belum dicek" }}</li>
-              <li>Surat diketahui BEM: {{ "<span class="material-symbols-outlined">check_circle</span> Ya" if booking.is_bem_verified else "<span class="material-symbols-outlined">cancel</span> Tidak / Belum dicek" }}</li>
+              <li>Mahasiswa FIB: {{ ('<span class="material-symbols-outlined">check_circle</span> Ya' if booking.is_fib_student else '<span class="material-symbols-outlined">cancel</span> Tidak / Belum dicek')|safe }}</li>
+              <li>Surat diketahui BEM: {{ ('<span class="material-symbols-outlined">check_circle</span> Ya' if booking.is_bem_verified else '<span class="material-symbols-outlined">cancel</span> Tidak / Belum dicek')|safe }}</li>
               {% if booking.staff_note %}<li>Catatan Staff: {{ booking.staff_note }}</li>{% endif %}
             </ul>
           </div>
