@@ -19,6 +19,7 @@
   </head>
   <body>
     <main class="container">
+      {% block flash %}
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <section>
@@ -28,6 +29,7 @@
           </section>
         {% endif %}
       {% endwith %}
+      {% endblock %}
       {% block content %}{% endblock %}
     </main>
 
