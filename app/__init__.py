@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, render_template
-from app.extensions import db, migrate
+from app.extensions import db, migrate, csrf
 
 try:
     from dotenv import load_dotenv
@@ -26,6 +26,7 @@ def create_app(config_object: str = "config.DevelopmentConfig") -> Flask:
 
     db.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
     from app.extensions import limiter
     limiter.init_app(app)
 
